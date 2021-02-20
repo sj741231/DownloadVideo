@@ -2,27 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="16a908bb-3a98-4355-86ed-94be471bd7c1" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/DownloadVideo.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/doc/requirements.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/handle.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/readme.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/row_object.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/util_download.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/util_hash.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/util_logfile.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/util_re.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/util_readfile.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/util_requester.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/util_xlsx.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/DownloadVideo.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/DownloadVideo.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/util_xlsx.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/util_xlsx.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -30,6 +13,17 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="Git.Settings">
+    <option name="PUSH_TAGS">
+      <GitPushTagMode>
+        <option name="argument" value="--tags" />
+        <option name="title" value="All" />
+      </GitPushTagMode>
+    </option>
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="dev" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="ProjectId" id="1ojiyYmNByslDlafGWYc2y8OKDo" />
@@ -64,17 +58,56 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1613806655142</updated>
-      <workItem from="1613806656568" duration="346000" />
+      <workItem from="1613806656568" duration="1441000" />
     </task>
+    <task id="LOCAL-00001" summary="1、完成基础功能">
+      <created>1613807131423</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1613807131423</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="1" />
   </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="1、完成基础功能" />
+    <option name="LAST_COMMIT_MESSAGE" value="1、完成基础功能" />
+  </component>
   <component name="WindowStateProjectService">
-    <state x="607" y="377" key="git4idea.ui.GitTagDialog" timestamp="1613807040486">
+    <state x="434" y="127" key="CommitChangelistDialog2" timestamp="1613807131169">
       <screen x="0" y="0" width="1680" height="1004" />
     </state>
-    <state x="607" y="377" key="git4idea.ui.GitTagDialog/0.0.1680.1004@0.0.1680.1004" timestamp="1613807040486" />
+    <state x="434" y="127" key="CommitChangelistDialog2/0.0.1680.1004@0.0.1680.1004" timestamp="1613807131169" />
+    <state x="630" y="236" key="VCS.ChangeListViewerDialog" timestamp="1613807179243">
+      <screen x="0" y="0" width="1680" height="1004" />
+    </state>
+    <state x="630" y="236" key="VCS.ChangeListViewerDialog/0.0.1680.1004@0.0.1680.1004" timestamp="1613807179243" />
+    <state x="440" y="265" key="Vcs.Push.Dialog.v2" timestamp="1613809394442">
+      <screen x="0" y="0" width="1680" height="1004" />
+    </state>
+    <state x="440" y="265" key="Vcs.Push.Dialog.v2/0.0.1680.1004@0.0.1680.1004" timestamp="1613809394442" />
+    <state x="523" y="323" key="git4idea.merge.GitPullDialog" timestamp="1613809368967">
+      <screen x="0" y="0" width="1680" height="1004" />
+    </state>
+    <state x="523" y="323" key="git4idea.merge.GitPullDialog/0.0.1680.1004@0.0.1680.1004" timestamp="1613809368967" />
+    <state x="607" y="377" key="git4idea.ui.GitTagDialog" timestamp="1613807205187">
+      <screen x="0" y="0" width="1680" height="1004" />
+    </state>
+    <state x="607" y="377" key="git4idea.ui.GitTagDialog/0.0.1680.1004@0.0.1680.1004" timestamp="1613807205187" />
   </component>
 </project>

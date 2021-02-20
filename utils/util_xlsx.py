@@ -1,4 +1,5 @@
 # -*- coding:utf-8 -*-
+__author__ = 'shijin'
 from openpyxl import Workbook  # 新增
 from openpyxl import load_workbook  # 加载已有
 import collections
