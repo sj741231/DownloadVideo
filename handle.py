@@ -113,7 +113,7 @@ def download_video_thread(row_object_iterator, **kwargs):
             data = future.result()
             if data:
                 download_result.append(data)
-
+        nlogger.info(f'Download completed, {len(download_result)} files downloaded')
         return download_result
     except Exception as e:
         nlogger.error("{fn} error: {e}".format(fn='download_video_thread', e=traceback.format_exc()))
@@ -307,7 +307,9 @@ def write_result_to_xls(source_xls, download_result):
             values = (x, y, row_object.column_value.get('result', 'unknown'))
             source_xls.write_sheet_rows_value(sheet_name=row_object.sheet_name, values=values)
 
-        source_xls.save("dl_{d}.xlsx".format(d=datetime.now().strftime('%Y%m%d-%H:%M:%S')))
+        _dl_file_name = "dl_{d}.xlsx".format(d=datetime.now().strftime('%Y%m%d-%H:%M:%S'))
+        source_xls.save(_dl_file_name)
+        nlogger.info(f'Write result completed, output file: {_dl_file_name}')
     except Exception as e:
         nlogger.error("{fn} error: {e}".format(fn='download_video_from_url', e=traceback.format_exc()))
         raise WriteResultError("{fn} error: {e}".format(fn='download_video_from_url', e=repr(e)))
