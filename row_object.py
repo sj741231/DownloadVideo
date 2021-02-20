@@ -1,4 +1,5 @@
 # -*- coding:utf-8 -*-
+__author__ = 'shijin'
 from enum import Enum
 from enum import unique
 
