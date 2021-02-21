@@ -4,7 +4,7 @@
     <list default="true" id="16a908bb-3a98-4355-86ed-94be471bd7c1" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/handle.py" beforeDir="false" afterPath="$PROJECT_DIR$/handle.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/row_object.py" beforeDir="false" afterPath="$PROJECT_DIR$/row_object.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/settings.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/utils/util_download.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/util_download.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -34,6 +34,7 @@
   </component>
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="true" />
   </component>
   <component name="ServiceViewManager">
@@ -58,7 +59,8 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1613806655142</updated>
-      <workItem from="1613806656568" duration="1720000" />
+      <workItem from="1613806656568" duration="1999000" />
+      <workItem from="1613885025810" duration="10027000" />
     </task>
     <task id="LOCAL-00001" summary="1、完成基础功能">
       <created>1613807131423</created>
@@ -74,7 +76,21 @@
       <option name="project" value="LOCAL" />
       <updated>1613809882525</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="1、完成基础功能&#10;2、增加author&#10;3、为了测试pull request">
+      <created>1613811896790</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1613811896790</updated>
+    </task>
+    <task id="LOCAL-00004" summary="1、完成基础功能&#10;2、增加author&#10;3、测试pull request&#10;4、试验保护分支">
+      <created>1613811982218</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1613811982218</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -85,7 +101,9 @@
       <map>
         <entry key="MAIN">
           <value>
-            <State />
+            <State>
+              <option name="COLUMN_ORDER" />
+            </State>
           </value>
         </entry>
       </map>
@@ -93,25 +111,35 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="1、完成基础功能" />
-    <option name="LAST_COMMIT_MESSAGE" value="1、完成基础功能" />
+    <MESSAGE value="1、完成基础功能&#10;2、增加author&#10;3、为了测试pull request" />
+    <MESSAGE value="1、完成基础功能&#10;2、增加author&#10;3、测试pull request&#10;4、试验保护分支" />
+    <option name="LAST_COMMIT_MESSAGE" value="1、完成基础功能&#10;2、增加author&#10;3、测试pull request&#10;4、试验保护分支" />
   </component>
   <component name="WindowStateProjectService">
-    <state x="434" y="127" key="CommitChangelistDialog2" timestamp="1613811896566">
+    <state x="440" y="190" key="#Deployment" timestamp="1613901303900">
       <screen x="0" y="0" width="1680" height="1004" />
     </state>
-    <state x="434" y="127" key="CommitChangelistDialog2/0.0.1680.1004@0.0.1680.1004" timestamp="1613811896566" />
+    <state x="440" y="190" key="#Deployment/0.0.1680.1004@0.0.1680.1004" timestamp="1613901303900" />
+    <state x="434" y="127" key="CommitChangelistDialog2" timestamp="1613811982035">
+      <screen x="0" y="0" width="1680" height="1004" />
+    </state>
+    <state x="434" y="127" key="CommitChangelistDialog2/0.0.1680.1004@0.0.1680.1004" timestamp="1613811982035" />
     <state x="630" y="236" key="VCS.ChangeListViewerDialog" timestamp="1613807179243">
       <screen x="0" y="0" width="1680" height="1004" />
     </state>
     <state x="630" y="236" key="VCS.ChangeListViewerDialog/0.0.1680.1004@0.0.1680.1004" timestamp="1613807179243" />
-    <state x="440" y="265" key="Vcs.Push.Dialog.v2" timestamp="1613809934095">
+    <state x="440" y="265" key="Vcs.Push.Dialog.v2" timestamp="1613811994540">
       <screen x="0" y="0" width="1680" height="1004" />
     </state>
-    <state x="440" y="265" key="Vcs.Push.Dialog.v2/0.0.1680.1004@0.0.1680.1004" timestamp="1613809934095" />
-    <state x="523" y="323" key="git4idea.merge.GitPullDialog" timestamp="1613809368967">
+    <state x="440" y="265" key="Vcs.Push.Dialog.v2/0.0.1680.1004@0.0.1680.1004" timestamp="1613811994540" />
+    <state x="519" y="357" key="com.intellij.ide.util.TipDialog" timestamp="1613885031365">
+      <screen x="0" y="23" width="1680" height="981" />
+    </state>
+    <state x="519" y="357" key="com.intellij.ide.util.TipDialog/0.23.1680.981@0.23.1680.981" timestamp="1613885031365" />
+    <state x="523" y="323" key="git4idea.merge.GitPullDialog" timestamp="1613885168243">
       <screen x="0" y="0" width="1680" height="1004" />
     </state>
-    <state x="523" y="323" key="git4idea.merge.GitPullDialog/0.0.1680.1004@0.0.1680.1004" timestamp="1613809368967" />
+    <state x="523" y="323" key="git4idea.merge.GitPullDialog/0.0.1680.1004@0.0.1680.1004" timestamp="1613885168243" />
     <state x="607" y="377" key="git4idea.ui.GitTagDialog" timestamp="1613807205187">
       <screen x="0" y="0" width="1680" height="1004" />
     </state>

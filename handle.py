@@ -1,9 +1,10 @@
 # -*- coding:utf-8 -*-
 __author__ = 'shijin'
+
 import os
 import sys
 import getopt
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError
 from utils.util_logfile import nlogger, traceback
 from utils.util_xlsx import HandleXLSX
 from utils.util_requester import BeautifulSoup, requester
@@ -104,9 +105,9 @@ def download_video_thread(row_object_iterator, **kwargs):
     :param kwargs:
     :return: The result of download, it's list
     """
+    executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
     try:
         download_result = []
-        executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
         all_task = [executor.submit(download_video_task, row_object) for row_object in row_object_iterator]
 
         for future in as_completed(all_task, timeout=TASK_WAITING_TIME):
@@ -115,6 +116,10 @@ def download_video_thread(row_object_iterator, **kwargs):
                 download_result.append(data)
         nlogger.info(f'Download completed, {len(download_result)} files downloaded')
         return download_result
+    except TimeoutError as e:
+        nlogger.error("{fn} TimeoutError: {e}".format(fn='download_video_thread', e=repr(e)))
+        executor.shutdown(False)  # 不等待future 返回直接关闭资源
+        raise ThreadTaskError('{fn} TimeoutError: {e}'.format(fn='download_video_thread', e=repr(e)))
     except Exception as e:
         nlogger.error("{fn} error: {e}".format(fn='download_video_thread', e=traceback.format_exc()))
         raise ThreadTaskError('{fn} error: {e}'.format(fn='download_video_thread', e=repr(e)))
