@@ -121,7 +121,7 @@ def download_video(download_url, absolute_path_file, file_name, **kwargs):
                 if i > 1:
                     raise WGetError(error_msg)
                 else:
-                    time.sleep(random.randint(1, 3))
+                    time.sleep(random.randint(1, 2))
                     continue
             except URLError as e:
                 error_msg = "Download URLError:{0}, {1}, {2}, storage path is {3}".format(file_name,
@@ -132,7 +132,7 @@ def download_video(download_url, absolute_path_file, file_name, **kwargs):
                 if i > 1:
                     raise WGetError(error_msg)
                 else:
-                    time.sleep(random.randint(1, 3))
+                    time.sleep(random.randint(1, 2))
                     continue
             except Exception as e:
                 nlogger.error('Download failed:{f}, storage path is {p},WGet error: {e}'.format(f=file_name,
