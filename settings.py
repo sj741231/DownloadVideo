@@ -12,7 +12,7 @@ DL_ROOT_PATH = "/data/download"
 FORCE_DOWNLOAD = False
 
 # ThreadPoolExecutor max_workers
-MAX_WORKERS = 2
+MAX_WORKERS = 8
 
 # Thread task execution waiting time(s). as_completed
-TASK_WAITING_TIME = 3600 * 10
+TASK_WAITING_TIME = 3600 * 2
