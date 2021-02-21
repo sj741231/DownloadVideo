@@ -28,7 +28,7 @@ def create_logger(filename='batch'):
         os.makedirs(log_base_dir)
 
     handler = logging.FileHandler(log_filename)
-    fmt = '%(asctime)s -%(name)s-%(levelname)s-%(module)s.%(funcName)s:%(lineno)d:%(message)s'
+    fmt = '%(asctime)s|%(name)s|%(levelname)s|%(module)s.%(funcName)s|%(lineno)d|%(message)s'
     date_fmt = "%Y-%m-%d %H:%M:%S"
     formatter = logging.Formatter(fmt, date_fmt)
     handler.setFormatter(formatter)

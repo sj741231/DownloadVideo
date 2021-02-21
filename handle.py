@@ -5,9 +5,9 @@ import os
 import sys
 import getopt
 from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError
-from utils.util_logfile import nlogger, traceback
+from utils.util_logfile import nlogger, flogger, traceback
 from utils.util_xlsx import HandleXLSX
-from utils.util_requester import BeautifulSoup, requester
+from utils.util_requester import BeautifulSoup, requester, RequestException
 from utils.util_re import is_url
 from utils.util_download import get_file_path, download_video, check_file_exist
 from datetime import datetime
@@ -122,6 +122,7 @@ def download_video_thread(row_object_iterator, **kwargs):
         raise ThreadTaskError('{fn} TimeoutError: {e}'.format(fn='download_video_thread', e=repr(e)))
     except Exception as e:
         nlogger.error("{fn} error: {e}".format(fn='download_video_thread', e=traceback.format_exc()))
+        flogger.error("{fn} error: {e}".format(fn='download_video_thread', e=repr(e)))
         raise ThreadTaskError('{fn} error: {e}'.format(fn='download_video_thread', e=repr(e)))
 
 
@@ -143,21 +144,31 @@ def download_video_task(row_object, root_path=DL_ROOT_PATH, force_download=FORCE
     except AssertionError as e:
         row_object.status = RowStatus.ERROR.value
         nlogger.error("{fn} Params error: {e}".format(fn='download_video_task', e=traceback.format_exc()))
+
         if hasattr(row_object, 'column_value') and isinstance(row_object.column_value, dict):
             row_object.column_value['result'] = f'Params AssertionError: {str(e)}'
+            _vid = row_object.column_value.get('vid', 'Unknown vid')
         else:
             setattr(row_object, 'column_value', {'result': f'Params AssertionError: {str(e)}'})
+            _vid = 'Unknown vid'
+        flogger.error("download_video_task failed:{f},AssertionError:{e}".format(f=_vid, e=repr(e)))
         return row_object
     except GetURLError as e:
         row_object.status = RowStatus.ERROR.value
+        _vid = row_object.column_value.get('vid', 'Unknown vid')
+        flogger.error("download_video_task failed:{f},GetURLError:{e}".format(f=_vid, e=repr(e)))
         row_object.column_value['result'] = f'GetURLError: {str(e)}'
         return row_object
     except GetStorageError as e:
         row_object.status = RowStatus.ERROR.value
+        _vid = row_object.column_value.get('vid', 'Unknown vid')
+        flogger.error("download_video_task failed:{f},GetStorageError:{e}".format(f=_vid, e=repr(e)))
         row_object.column_value['result'] = f'GetStorageError: {str(e)}'
         return row_object
     except DownloadVideoError as e:
         row_object.status = RowStatus.ERROR.value
+        _vid = row_object.column_value.get('vid', 'Unknown vid')
+        flogger.error("download_video_task failed:{f},DownloadVideoError:{e}".format(f=_vid, e=repr(e)))
         row_object.column_value['result'] = f'DownloadVideoError: {str(e)}'
         return row_object
     except Exception as e:
@@ -167,6 +178,8 @@ def download_video_task(row_object, root_path=DL_ROOT_PATH, force_download=FORCE
                                                                           v=row_object.column_value['vid'],
                                                                           e=traceback.format_exc(), ))
         row_object.column_value['result'] = f'download_video_task undefined error: {str(e)}'
+        _vid = row_object.column_value.get('vid', 'Unknown vid')
+        flogger.error("download_video_task undefined failed:{f},DownloadVideoError:{e}".format(f=_vid, e=repr(e)))
         return row_object
 
 
@@ -227,6 +240,9 @@ def get_video_url(pre_row_object, **kwargs):
                     "Get URL invalid, sn:{s}, vid:{v}, url:{u}.".format(s=pre_row_object.column_value.get('sn'),
                                                                         v=pre_row_object.column_value.get('vid'),
                                                                         u=_temporary_url))
+    except RequestException as e:
+        nlogger.error("{fn} RequestException: {e}".format(fn='get_video_url', e=repr(e)))
+        raise GetURLError("{fn} RequestException: {e}".format(fn='get_video_url', e=repr(e)))
     except Exception as e:
         nlogger.error("{fn} error: {e}".format(fn='get_video_url', e=traceback.format_exc()))
         raise GetURLError("{fn} error: {e}".format(fn='get_video_url', e=repr(e)))

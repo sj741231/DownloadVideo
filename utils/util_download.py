@@ -9,8 +9,13 @@ import sys
 import wget
 import traceback
 import time
+import socket
+import urllib
 from urllib.error import URLError, HTTPError, ContentTooShortError
 import random
+
+# set socket default timeout
+SOCKET_TIMEOUT = 1800
 
 
 class WGetError(Exception):
@@ -84,20 +89,32 @@ def download_video(download_url, absolute_path_file, file_name, **kwargs):
     """
     try:
         _start_time = time.time()
-        nlogger.info('Download start: {f}.'.format(f=absolute_path_file))
+        nlogger.info('Download start:{f}.'.format(f=absolute_path_file))
 
         for i in range(3):
             try:
+                # Because wget.download use ulib.urlretrieve, it has no timeout
+                # So set socket.setdefaulttimeout(3600) to prevent jamming
+                socket.setdefaulttimeout(SOCKET_TIMEOUT)
                 download_file_name = wget.download(download_url, out=absolute_path_file, bar=None)
                 _end_time = time.time()
                 nlogger.info(
-                    'Download success: {f}, it takes {t:.2f}s.'.format(f=absolute_path_file, t=_end_time - _start_time))
+                    'Download success:{f}, it takes {t:.2f}s.'.format(f=absolute_path_file, t=_end_time - _start_time))
                 slogger.info(
-                    'Download success: {f}, its storage path is {p}.'.format(f=file_name, p=absolute_path_file))
+                    'Download success:{f}, its storage path is {p}.'.format(f=file_name, p=absolute_path_file))
 
                 return download_file_name
+            except socket.timeout:
+                error_msg = f"Download timeout: {file_name},storage path is {absolute_path_file},url is{download_url}"
+                nlogger.error(error_msg)
+                if i > 1:
+                    raise WGetError(error_msg)
+                else:
+                    time.sleep(1)
+                    continue
             except HTTPError as e:
-                error_msg = "Download HTTPError:{0}, {1}, {2}, storage path is {3}".format(file_name, download_url,
+                error_msg = "Download HTTPError:{0}, {1}, {2}, storage path is {3}".format(file_name,
+                                                                                           download_url,
                                                                                            e.code,
                                                                                            absolute_path_file)
                 nlogger.error(error_msg)
@@ -118,14 +135,14 @@ def download_video(download_url, absolute_path_file, file_name, **kwargs):
                     time.sleep(random.randint(1, 3))
                     continue
             except Exception as e:
-                nlogger.error('Download failed: {f}, storage path is {p},WGet error: {e}'.format(f=file_name,
+                nlogger.error('Download failed:{f}, storage path is {p},WGet error: {e}'.format(f=file_name,
                                                                                                  p=absolute_path_file,
                                                                                                  e=traceback.format_exc()))
-                raise WGetError('Download failed: {f},storage path is {p},WGet error: {e}'.format(f=file_name,
+                raise WGetError('Download failed:{f},storage path is {p},WGet error: {e}'.format(f=file_name,
                                                                                                   p=absolute_path_file,
                                                                                                   e=repr(e)))
         else:
-            error_msg = 'Download failed: {f},storage path is {p},WGet retry failed'.format(f=file_name,
+            error_msg = 'Download failed:{f},storage path is {p},WGet retry failed'.format(f=file_name,
                                                                                             p=absolute_path_file)
             nlogger.error(error_msg)
             raise WGetError(error_msg)
@@ -134,7 +151,7 @@ def download_video(download_url, absolute_path_file, file_name, **kwargs):
         return
     except Exception as e:
         nlogger.error('{fn} download {f} error: {e}'.format(fn='download_video', f=file_name, e=traceback.format_exc()))
-        flogger.error("Download failed: {f}, error: {e}".format(f=file_name, e=repr(e)))
+        flogger.error("Download failed:{f}, error: {e}".format(f=file_name, e=repr(e)))
         return
 
 
