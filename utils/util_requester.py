@@ -14,7 +14,7 @@ import uuid
 from settings import BASE_URL
 
 
-class UndefineException(Exception):
+class UnDefineException(Exception):
     pass
 
 
@@ -69,7 +69,7 @@ class Requester(object):
         ssl_verify = True
         cert = None
         baseurl = None
-        timeout = timeout = (10, 60)
+        timeout = (10, 60)
 
         if len(args) == 1:
             username, = args
@@ -88,7 +88,8 @@ class Requester(object):
 
         self.key = kwargs.get('appkey') if kwargs.get('appkey') is not None else None
         self.baseurl = kwargs.get('url') if kwargs.get('url') is not None else None
-        self.timeout = kwargs.get('timeout') if kwargs.get('timeout') is not None else timeout
+        self.timeout = kwargs.get('timeout') if kwargs.get('timeout') \
+                                                and isinstance(kwargs.get('timeout'), (tuple, int)) else timeout
 
         baseurl = kwargs.get('baseurl', baseurl)
         # self.base_scheme = urlparse.urlsplit(
@@ -163,6 +164,9 @@ class Requester(object):
             allow_redirects=allow_redirects,
             stream=stream
         )
+        # params = None, data = None, headers = None, cookies = None, files = None,
+        # auth = None, timeout = None, allow_redirects = True, proxies = None,
+        # hooks = None, stream = None, verify = None, cert = None, json = None
         return self.session.get(self._update_url_scheme(url), **requestKwargs)
 
     def post_url(self, url, params=None, data=None, files=None, headers=None, allow_redirects=True, **kwargs):
@@ -173,6 +177,9 @@ class Requester(object):
             headers=headers,
             allow_redirects=allow_redirects, **kwargs
         )
+        # params = None, data = None, headers = None, cookies = None, files = None,
+        # auth = None, timeout = None, allow_redirects = True, proxies = None,
+        # hooks = None, stream = None, verify = None, cert = None, json = None
         return self.session.post(self._update_url_scheme(url), **requestKwargs)
 
     def post_multipart_and_confirm_status(self, url, params=None, data=None, files=None, headers=None, valid=None,
@@ -199,7 +206,7 @@ class Requester(object):
             headers,
             allow_redirects)
         if response.status_code not in valid:
-            raise UndefineException(
+            raise UnDefineException(
                 'Operation failed. url={u}, data={d}, headers={h}, status={s}, text={t}'.format(
                     u=response.url,
                     d=data,
@@ -229,7 +236,7 @@ class Requester(object):
             headers,
             allow_redirects)
         if response.status_code not in valid:
-            raise UndefineException(
+            raise UnDefineException(
                 'Operation failed. url={u}, data={d}, headers={h}, status={s}, text={t}'.format(
                     u=response.url,
                     d=data,
@@ -246,7 +253,7 @@ class Requester(object):
             if response.status_code == 405:  # POST required
                 raise PostRequired('POST required for url {u}'.format(u=str(url)))
 
-            raise UndefineException(
+            raise UnDefineException(
                 'Operation failed. url={u}, headers={h}, status={s}, text={t}'.format(
                     u=response.url,
                     h=headers,
