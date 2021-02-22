@@ -118,7 +118,7 @@ def download_video_thread(row_object_iterator, **kwargs):
         return download_result
     except TimeoutError as e:
         nlogger.error("{fn} TimeoutError: {e}".format(fn='download_video_thread', e=repr(e)))
-        executor.shutdown(False)  # 不等待future 返回直接关闭资源
+        executor.shutdown(True)  # 不等待future 返回直接关闭资源
         raise ThreadTaskError('{fn} TimeoutError: {e}'.format(fn='download_video_thread', e=repr(e)))
     except Exception as e:
         nlogger.error("{fn} error: {e}".format(fn='download_video_thread', e=traceback.format_exc()))

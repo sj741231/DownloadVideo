@@ -10,9 +10,12 @@ import wget
 import traceback
 import time
 import socket
+import requests
+from requests.exceptions import RequestException
 import urllib
 from urllib.error import URLError, HTTPError, ContentTooShortError
 import random
+from contextlib import closing
 
 # set socket default timeout
 SOCKET_TIMEOUT = 1800
@@ -136,14 +139,14 @@ def download_video(download_url, absolute_path_file, file_name, **kwargs):
                     continue
             except Exception as e:
                 nlogger.error('Download failed:{f}, storage path is {p},WGet error: {e}'.format(f=file_name,
-                                                                                                 p=absolute_path_file,
-                                                                                                 e=traceback.format_exc()))
+                                                                                                p=absolute_path_file,
+                                                                                                e=traceback.format_exc()))
                 raise WGetError('Download failed:{f},storage path is {p},WGet error: {e}'.format(f=file_name,
-                                                                                                  p=absolute_path_file,
-                                                                                                  e=repr(e)))
+                                                                                                 p=absolute_path_file,
+                                                                                                 e=repr(e)))
         else:
             error_msg = 'Download failed:{f},storage path is {p},WGet retry failed'.format(f=file_name,
-                                                                                            p=absolute_path_file)
+                                                                                           p=absolute_path_file)
             nlogger.error(error_msg)
             raise WGetError(error_msg)
     except WGetError as e:
@@ -152,6 +155,56 @@ def download_video(download_url, absolute_path_file, file_name, **kwargs):
     except Exception as e:
         nlogger.error('{fn} download {f} error: {e}'.format(fn='download_video', f=file_name, e=traceback.format_exc()))
         flogger.error("Download failed:{f}, error: {e}".format(f=file_name, e=repr(e)))
+        return
+
+
+"""
+    1、当使用requests的get下载大文件/数据时，建议使用使用stream模式。
+    当把get函数的stream参数设置成False时，它会立即开始下载文件并放到内存中，如果文件过大，有可能导致内存不足。
+    当把get函数的stream参数设置成True时，它不会立即开始下载，当你使用iter_content或iter_lines遍历内容或访问内容属性时才开始下载。
+    需要注意一点：文件没有下载之前，它也需要保持连接。
+    iter_content：一块一块的遍历要下载的内容
+    iter_lines：一行一行的遍历要下载的内容
+    使用上面两个函数下载大文件可以防止占用过多的内存，因为每次只下载小部分数据
+    
+    2、使用with closing 来确保请求连接关闭
+"""
+
+
+def download_file(download_url, absolute_path_file, file_name, chunk_size=4096 * 1024, retry=3, **kwargs):
+    headers = {
+        'Connection': 'keep-alive',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, '
+                      'like Gecko) Chrome/58.0.3029.110 Safari/537.36 SE 2.X MetaSr 1.0'
+    }
+
+    _chunk_size = chunk_size if isinstance(chunk_size, int) and chunk_size < 4096 * 1024 else 4096 * 1024  # 4M
+    _retry = retry if retry and isinstance(retry, int) else 3  # try 3 times
+
+    for i in range(_retry):
+        try:
+            with closing(requests.get(url=download_url, headers=headers, verify=False, proxies=None, stream=True,
+                                      timeout=(15, 300))) as res:
+                with open(absolute_path_file, 'wb') as fd:
+                    for chunk in res.iter_content(chunk_size=_chunk_size):
+                        if chunk:
+                            fd.write(chunk)
+            return absolute_path_file
+        except RequestException as e:
+            error_msg = f"Download failed::{file_name}, storage path is {absolute_path_file}," \
+                        f"RequestException error: {repr(e)}"
+            nlogger.error(error_msg)
+            continue
+        except Exception as e:
+            error_msg = f"Download failed:{file_name}, storage path is {absolute_path_file}," \
+                        f"undefined error: {traceback.format_exc()}"
+            nlogger.error(error_msg)
+            flogger.error(error_msg)
+            return
+    else:
+        error_msg = f"Download failed:{file_name}, storage path is {absolute_path_file}, {_retry} retries failed"
+        nlogger.error(error_msg)
+        flogger.error(error_msg)
         return
 
 
