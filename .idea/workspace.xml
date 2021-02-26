@@ -4,7 +4,10 @@
     <list default="true" id="16a908bb-3a98-4355-86ed-94be471bd7c1" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/handle.py" beforeDir="false" afterPath="$PROJECT_DIR$/handle.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/row_object.py" beforeDir="false" afterPath="$PROJECT_DIR$/row_object.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/settings.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/utils/util_download.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/util_download.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/util_requester.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/util_requester.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -61,7 +64,10 @@
       <updated>1613806655142</updated>
       <workItem from="1613806656568" duration="1999000" />
       <workItem from="1613885025810" duration="20472000" />
-      <workItem from="1614003517214" duration="4101000" />
+      <workItem from="1614003517214" duration="4295000" />
+      <workItem from="1614049916904" duration="8266000" />
+      <workItem from="1614154635506" duration="395000" />
+      <workItem from="1614345391040" duration="8382000" />
     </task>
     <task id="LOCAL-00001" summary="1、完成基础功能">
       <created>1613807131423</created>
@@ -112,7 +118,14 @@
       <option name="project" value="LOCAL" />
       <updated>1613923373835</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="1、调整配置参数&#10;2、增加download_file方法，准备测试替换wget模块">
+      <created>1614008688968</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1614008688968</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -138,36 +151,38 @@
     <MESSAGE value="1、修改了线程任务超时时间为3600 * 2秒&#10;2、增加了线程任务超时异常处理&#10;3、增加了wget模块失败重试功能" />
     <MESSAGE value="1、增加了socket.timeout，为了捕获urlretrieve卡死&#10;2、调整了日志模块输出格式&#10;3、增加了handle中任务失败日志&#10;4、暂时设置了executor.shutdown(False),待观察" />
     <MESSAGE value="1、调整配置参数" />
-    <option name="LAST_COMMIT_MESSAGE" value="1、调整配置参数" />
+    <MESSAGE value="1、调整配置参数&#10;2、增加download_file方法，准备测试替换wget模块" />
+    <option name="LAST_COMMIT_MESSAGE" value="1、调整配置参数&#10;2、增加download_file方法，准备测试替换wget模块" />
   </component>
   <component name="WindowStateProjectService">
     <state x="440" y="190" key="#Deployment" timestamp="1613901303900">
       <screen x="0" y="0" width="1680" height="1004" />
     </state>
     <state x="440" y="190" key="#Deployment/0.0.1680.1004@0.0.1680.1004" timestamp="1613901303900" />
-    <state x="434" y="127" key="CommitChangelistDialog2" timestamp="1613923373664">
+    <state x="434" y="127" key="CommitChangelistDialog2" timestamp="1614008688746">
       <screen x="0" y="0" width="1680" height="1004" />
     </state>
-    <state x="434" y="127" key="CommitChangelistDialog2/0.0.1680.1004@0.0.1680.1004" timestamp="1613923373664" />
-    <state x="168" y="139" key="DiffContextDialog" timestamp="1613923370930">
+    <state x="434" y="127" key="CommitChangelistDialog2/0.0.1680.1004@0.0.1680.1004" timestamp="1614008688746" />
+    <state x="168" y="139" key="DiffContextDialog" timestamp="1614008771264">
       <screen x="0" y="0" width="1680" height="1004" />
     </state>
-    <state x="168" y="139" key="DiffContextDialog/0.0.1680.1004@0.0.1680.1004" timestamp="1613923370930" />
+    <state x="168" y="139" key="DiffContextDialog/0.0.1680.1004@0.0.1680.1004" timestamp="1614008771264" />
     <state x="630" y="236" key="VCS.ChangeListViewerDialog" timestamp="1613901639262">
       <screen x="0" y="0" width="1680" height="1004" />
     </state>
     <state x="630" y="236" key="VCS.ChangeListViewerDialog/0.0.1680.1004@0.0.1680.1004" timestamp="1613901639262" />
-    <state x="440" y="265" key="Vcs.Push.Dialog.v2" timestamp="1613915458952">
+    <state x="440" y="265" key="Vcs.Push.Dialog.v2" timestamp="1614008775487">
       <screen x="0" y="0" width="1680" height="1004" />
     </state>
-    <state x="440" y="265" key="Vcs.Push.Dialog.v2/0.0.1680.1004@0.0.1680.1004" timestamp="1613915458952" />
+    <state x="440" y="265" key="Vcs.Push.Dialog.v2/0.0.1680.1004@0.0.1680.1004" timestamp="1614008775487" />
     <state x="100" y="100" width="1480" height="850" key="com.intellij.history.integration.ui.views.FileHistoryDialog" timestamp="1613912245358">
       <screen x="0" y="0" width="1680" height="1004" />
     </state>
     <state x="100" y="100" width="1480" height="850" key="com.intellij.history.integration.ui.views.FileHistoryDialog/0.0.1680.1004@0.0.1680.1004" timestamp="1613912245358" />
-    <state x="519" y="357" key="com.intellij.ide.util.TipDialog" timestamp="1613885031365">
-      <screen x="0" y="23" width="1680" height="981" />
+    <state x="519" y="342" key="com.intellij.ide.util.TipDialog" timestamp="1614154635935">
+      <screen x="0" y="0" width="1680" height="1004" />
     </state>
+    <state x="519" y="342" key="com.intellij.ide.util.TipDialog/0.0.1680.1004@0.0.1680.1004" timestamp="1614154635935" />
     <state x="519" y="357" key="com.intellij.ide.util.TipDialog/0.23.1680.981@0.23.1680.981" timestamp="1613885031365" />
     <state x="506" y="282" width="667" height="486" key="find.popup" timestamp="1613909297986">
       <screen x="0" y="0" width="1680" height="1004" />

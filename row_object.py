@@ -13,9 +13,11 @@ class RowStatus(Enum):  # 枚举类
     DOWNLOAD = 2
     FORCE = 3
     SKIP = 4
-    SUCCESS = 5
-    FAILURE = 6
-    ERROR = 7
+    BREAKPOINT = 5
+    SUCCESS = 6
+    FAILURE = 7
+    CANCEL = 8
+    ERROR = 9
 
 
 class RowObject(object):

@@ -4,6 +4,7 @@ __author__ = 'shijin'
 Download module
 """
 from utils.util_logfile import slogger, flogger, nlogger, UndefinedError
+from utils.util_requester import download_file_requester
 import os
 import sys
 import wget
@@ -79,6 +80,25 @@ def check_file_exist(absolute_path_file, **kwargs):
         return True
     else:
         return False
+
+
+def get_temp_file_name(absolute_path_file, **kwargs):
+    return f"{absolute_path_file}.tmp"
+
+
+def check_temp_file_exists(absolute_path_file, **kwargs):
+    """
+    check if temp file exists
+    :param absolute_path_file:
+    :param kwargs:
+    :return: The size of temp file
+    """
+    _temp_file = get_temp_file_name(absolute_path_file, **kwargs)
+    if os.path.isfile(_temp_file):
+        _temp_size = os.path.getsize(_temp_file)
+        return _temp_size
+    else:
+        return 0
 
 
 def download_video(download_url, absolute_path_file, file_name, **kwargs):
@@ -171,41 +191,129 @@ def download_video(download_url, absolute_path_file, file_name, **kwargs):
 """
 
 
-def download_file(download_url, absolute_path_file, file_name, chunk_size=4096 * 1024, retry=3, **kwargs):
+def get_requester():
+    pass
+
+
+def get_download_file_size(download_url, **kwargs):
+    # res_length = requests.get(download_url, stream=True)
+    with closing(download_file_requester.get_url(url=download_url, stream=True)) as res:
+        total_size = int(res.headers['Content-Length'])
+        return total_size
+
+
+def download_small_file(download_url, absolute_path_file, file_name, retry, **kwargs):
     headers = {
         'Connection': 'keep-alive',
         'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, '
                       'like Gecko) Chrome/58.0.3029.110 Safari/537.36 SE 2.X MetaSr 1.0'
     }
 
-    _chunk_size = chunk_size if isinstance(chunk_size, int) and chunk_size < 4096 * 1024 else 4096 * 1024  # 4M
-    _retry = retry if retry and isinstance(retry, int) else 3  # try 3 times
-
-    for i in range(_retry):
+    for i in range(retry):
         try:
-            with closing(requests.get(url=download_url, headers=headers, verify=False, proxies=None, stream=True,
-                                      timeout=(15, 300))) as res:
-                with open(absolute_path_file, 'wb') as fd:
-                    for chunk in res.iter_content(chunk_size=_chunk_size):
-                        if chunk:
-                            fd.write(chunk)
-            return absolute_path_file
+            with closing(download_file_requester.get_url(url=download_url, stream=True, headers=headers)) as res:
+                with open(absolute_path_file, mode='wb') as f:
+                    f.write(res.content)
+            return f.name
         except RequestException as e:
             error_msg = f"Download failed::{file_name}, storage path is {absolute_path_file}," \
                         f"RequestException error: {repr(e)}"
             nlogger.error(error_msg)
             continue
         except Exception as e:
-            error_msg = f"Download failed:{file_name}, storage path is {absolute_path_file}," \
-                        f"undefined error: {traceback.format_exc()}"
-            nlogger.error(error_msg)
-            flogger.error(error_msg)
+            error_msg = f"Download failed:{file_name}, storage path is {absolute_path_file}, undefined error: %s"
+            nlogger.error(error_msg % (traceback.format_exc()))
+            flogger.error(error_msg % (repr(e)))
             return
     else:
-        error_msg = f"Download failed:{file_name}, storage path is {absolute_path_file}, {_retry} retries failed"
+        error_msg = f"Download failed:{file_name}, storage path is {absolute_path_file}, {retry} retries failed"
         nlogger.error(error_msg)
         flogger.error(error_msg)
         return
+
+
+def download_large_file(download_url, absolute_path_file, file_name, chunk_size, retry, **kwargs):
+    _temp_size = check_temp_file_exists(absolute_path_file)
+
+    headers = {
+        'Range': 'bytes=%d-' % _temp_size,
+        'Connection': 'keep-alive',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, '
+                      'like Gecko) Chrome/58.0.3029.110 Safari/537.36 SE 2.X MetaSr 1.0'
+    }
+
+    for i in range(retry):
+        try:
+            with closing(download_file_requester.get_url(url=download_url, stream=True, headers=headers)) as res:
+                with open(absolute_path_file, 'ab+') as f:
+                    for chunk in res.iter_content(chunk_size=chunk_size):
+                        if chunk:
+                            f.write(chunk)
+            return f.name
+        except RequestException as e:
+            error_msg = f"Download failed::{file_name}, storage path is {absolute_path_file}," \
+                        f"RequestException error: {repr(e)}"
+            nlogger.error(error_msg)
+            continue
+        except Exception as e:
+            error_msg = f"Download failed:{file_name}, storage path is {absolute_path_file}, undefined error: %s"
+            nlogger.error(error_msg % (traceback.format_exc()))
+            flogger.error(error_msg % (repr(e)))
+            return
+    else:
+        error_msg = f"Download failed:{file_name}, storage path is {absolute_path_file}, {retry} retries failed"
+        nlogger.error(error_msg)
+        flogger.error(error_msg)
+        return
+
+
+def download_file(download_url, absolute_path_file, file_name, chunk_size=4096 * 1024, retry=3, **kwargs):
+    _temp_size = check_temp_file_exists(absolute_path_file)
+    _total_size = get_download_file_size(download_url, **kwargs)
+    retry = retry if isinstance(retry, int) and retry < 10 else 5
+    chunk_size = chunk_size if isinstance(chunk_size, int) and chunk_size < 4096 * 1024 else chunk_size
+
+    if _total_size < chunk_size:
+        f = download_small_file(download_url, absolute_path_file, file_name, retry, **kwargs)
+    else:
+        f = download_large_file(download_url, absolute_path_file, file_name, chunk_size, retry, **kwargs)
+
+
+class Download(object):
+    download_url = None
+    storage_file_name = None
+    short_file_name = None
+    chunk_size = 4096 * 1024
+    retry = 3
+
+    def __init__(self, chunk_size=4096 * 1024, retry=3, **kwargs):
+        self.chunk_size = chunk_size if isinstance(chunk_size, int) and chunk_size < 4096 * 1024 else chunk_size
+        self.retry = retry if isinstance(retry, int) and retry < 10 else 3
+        self.get_kwargs(**kwargs)
+
+    def get_kwargs(self, **kwargs):
+        try:
+            for k, v in kwargs.items():
+                if hasattr(self, f'get_attribute_{k}'):
+                    _v = getattr(self, f'get_attribute_{k}')(**kwargs)
+                    setattr(self, k, _v)
+                else:
+                    setattr(self, k, v)
+        except:
+            raise NotImplementedError(f'get_kwargs error: {traceback.format_exc()}')
+
+    def get_attribute_download_url(self, **kwargs):
+        self.download_url = str(kwargs.get('url')).strip() if kwargs.get('url') and str(kwargs.get('url')).startswith(
+            "http") else None
+        return self.download_url
+
+    def get_attribute_storage_file_name(self, **kwargs):
+        self.storage_file_name = str(kwargs.get('storage_file_name')).strip() if kwargs.get('storage_file_name') else ''
+        return self.storage_file_name
+
+    def get_attribute_short_file_name(self, **kwargs):
+        self.short_file_name = str(kwargs.get('short_file_name')).strip() if kwargs.get('short_file_name') else None
+        return self.short_file_name
 
 
 if __name__ == "__main__":

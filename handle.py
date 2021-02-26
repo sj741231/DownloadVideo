@@ -9,7 +9,7 @@ from utils.util_logfile import nlogger, flogger, traceback
 from utils.util_xlsx import HandleXLSX
 from utils.util_requester import BeautifulSoup, requester, RequestException
 from utils.util_re import is_url
-from utils.util_download import get_file_path, download_video, check_file_exist
+from utils.util_download import get_file_path, download_video, check_file_exist, check_temp_file_exists, download_file
 from datetime import datetime
 from settings import BASE_URL, TASK_WAITING_TIME, FORCE_DOWNLOAD, MAX_WORKERS, DL_ROOT_PATH
 from row_object import RowStatus
@@ -138,8 +138,8 @@ def download_video_task(row_object, root_path=DL_ROOT_PATH, force_download=FORCE
     try:
         check_row_object(row_object, **kwargs)
         _pre_row_object = get_storage_absolute_path(row_object, root_path, force_download, **kwargs)
-        _mdl_row_object = get_video_url(_pre_row_object, **kwargs)
-        _post_row_object = download_video_from_url(_mdl_row_object, **kwargs)
+        _mid_row_object = get_video_url(_pre_row_object, **kwargs)
+        _post_row_object = download_video_from_url(_mid_row_object, **kwargs)
         return _post_row_object
     except AssertionError as e:
         row_object.status = RowStatus.ERROR.value
@@ -280,34 +280,67 @@ def get_storage_absolute_path(row_object, root_path, force_download, **kwargs):
         raise GetStorageError("{fn} error: {e}".format(fn='get_storage_absolute_path', e=repr(e)))
 
 
-def download_video_from_url(mdl_row_object, **kwargs):
+def download_video_from_url(mid_row_object, **kwargs):
     """
     Download video from temporary URL
-    :param mdl_row_object:
+    :param mid_row_object:
     :param kwargs:
     :return:
     """
     try:
-        url = mdl_row_object.temporary_url
-        file_name = "{f}".format(f=mdl_row_object.column_value.get('vid'))
-        absolute_path_file = mdl_row_object.storage_absolute_path
+        url = mid_row_object.temporary_url
+        file_name = "{f}".format(f=mid_row_object.column_value.get('vid'))
+        absolute_path_file = mid_row_object.storage_absolute_path
 
-        if RowStatus(mdl_row_object.status).name == 'SKIP':
-            mdl_row_object.column_value['result'] = f'Already exists: {absolute_path_file}'
+        if RowStatus(mid_row_object.status).name == 'SKIP':
+            mid_row_object.column_value['result'] = f'Already exists: {absolute_path_file}'
             nlogger.info(
                 'Download skip: {f}, its storage path is {p}.'.format(f=file_name, p=absolute_path_file))
         else:
             dl_file_name = download_video(url, absolute_path_file, file_name, **kwargs)
             if dl_file_name:
-                if RowStatus(mdl_row_object.status).name == 'FORCE':
-                    mdl_row_object.column_value['result'] = f'Download again: {dl_file_name}'
+                if RowStatus(mid_row_object.status).name == 'FORCE':
+                    mid_row_object.column_value['result'] = f'Download again: {dl_file_name}'
                 else:
-                    mdl_row_object.column_value['result'] = f'Download successful: {dl_file_name}'
-                mdl_row_object.status = RowStatus.SUCCESS.value
+                    mid_row_object.column_value['result'] = f'Download successful: {dl_file_name}'
+                mid_row_object.status = RowStatus.SUCCESS.value
             else:
-                mdl_row_object.column_value['result'] = f"Download failed: {file_name}"
-                mdl_row_object.status = RowStatus.FAILURE.value
-        return mdl_row_object
+                mid_row_object.column_value['result'] = f"Download failed: {file_name}"
+                mid_row_object.status = RowStatus.FAILURE.value
+        return mid_row_object
+    except Exception as e:
+        nlogger.error("{fn} error: {e}".format(fn='download_video_from_url', e=traceback.format_exc()))
+        raise DownloadVideoError("{fn} error: {e}".format(fn='download_video_from_url', e=repr(e)))
+
+
+def download_file_from_url(mid_row_object, **kwargs):
+    """
+    Download file from temporary URL
+    :param mid_row_object:
+    :param kwargs:
+    :return:
+    """
+    try:
+        url = mid_row_object.temporary_url
+        file_name = "{f}".format(f=mid_row_object.column_value.get('vid'))
+        absolute_path_file = mid_row_object.storage_absolute_path
+
+        if RowStatus(mid_row_object.status).name == 'SKIP':
+            mid_row_object.column_value['result'] = f'Already exists: {absolute_path_file}'
+            nlogger.info(
+                'Download skip: {f}, its storage path is {p}.'.format(f=file_name, p=absolute_path_file))
+        else:
+            dl_file_name = download_file(url, absolute_path_file, file_name, chunk_size=4096 * 1024, retry=3, **kwargs)
+            if dl_file_name:
+                if RowStatus(mid_row_object.status).name == 'FORCE':
+                    mid_row_object.column_value['result'] = f'Download again: {dl_file_name}'
+                else:
+                    mid_row_object.column_value['result'] = f'Download successful: {dl_file_name}'
+                mid_row_object.status = RowStatus.SUCCESS.value
+            else:
+                mid_row_object.column_value['result'] = f"Download failed: {file_name}"
+                mid_row_object.status = RowStatus.FAILURE.value
+        return mid_row_object
     except Exception as e:
         nlogger.error("{fn} error: {e}".format(fn='download_video_from_url', e=traceback.format_exc()))
         raise DownloadVideoError("{fn} error: {e}".format(fn='download_video_from_url', e=repr(e)))

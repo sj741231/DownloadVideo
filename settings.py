@@ -5,6 +5,9 @@ settings for dlvideo project.
 # Request URL for get temporary download URL
 BASE_URL = "http://demo.polyv.net/dlsource/5c0ad4c56c.php"
 
+# Temporary download Base URL
+DL_BASE_URL = "http://dl.videocc.net/"
+
 # Download file storage root path
 DL_ROOT_PATH = "/data/download"
 
