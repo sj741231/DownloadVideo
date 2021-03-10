@@ -145,8 +145,9 @@ class HandleXLSX(object):
             if _row_dict:
                 yield _row_dict
 
-    def generate_row_object_iterator(self, sheet_name=None, start_point=None, end_point=None, **kwargs):
+    def generate_row_object_iterator(self, check_file, sheet_name=None, start_point=None, end_point=None, **kwargs):
         """
+        :param check_file:
         :param sheet_name: sheet name
         :param start_point: the start row number of the sheet
         :param end_point: the end row number of the sheet
@@ -167,7 +168,7 @@ class HandleXLSX(object):
                 row_object.row_value = row_value_list
                 row_object.column_value = dict(zip(column_name_list, row_value_list))
                 row_object.position = row_number
-                row_object.status = RowStatus.INITIAL.value
+                row_object.status = RowStatus.INITIAL.value if check_file is False else RowStatus.CHECK.value
                 yield row_object
 
     def get_column_name_list(self, sheet_name=None, **kwargs):

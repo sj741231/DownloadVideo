@@ -18,6 +18,9 @@ class RowStatus(Enum):  # 枚举类
     FAILURE = 7
     CANCEL = 8
     ERROR = 9
+    CHECK = 10
+    EXISTENCE = 11
+    NONEXISTENCE = 12
 
 
 class RowObject(object):

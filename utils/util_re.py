@@ -131,12 +131,20 @@ def is_domain(domain):
     return _re_domain.match(domain)
 
 
+# def is_url(url):
+#     try:
+#         url_regex = re.compile(r'^http[s]?://', re.IGNORECASE)
+#         return True if url_regex.match(url) else False
+#     except:
+#         # print(str(e))
+#         return False
+
+
 def is_url(url):
     try:
-        url_regex = re.compile(r'^http[s]?://', re.IGNORECASE)
+        url_regex = re.compile(r'^https?:/{2}\w.+$', re.IGNORECASE)
         return True if url_regex.match(url) else False
     except:
-        # print(str(e))
         return False
 
 

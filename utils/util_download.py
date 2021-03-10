@@ -3,10 +3,17 @@ __author__ = 'shijin'
 """
 Download module
 """
-from utils.util_logfile import slogger, flogger, nlogger, UndefinedError
-from utils.util_requester import download_file_requester
+
 import os
 import sys
+
+# sys.path.append("/opt/dev/dlvideo/")
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from utils.util_logfile import slogger, flogger, nlogger, UndefinedError
+from utils.util_requester import download_file_requester
+from utils.util_re import is_url
+import shutil
 import wget
 import traceback
 import time
@@ -17,12 +24,25 @@ import urllib
 from urllib.error import URLError, HTTPError, ContentTooShortError
 import random
 from contextlib import closing
+import hashlib
 
 # set socket default timeout
 SOCKET_TIMEOUT = 1800
 
 
 class WGetError(Exception):
+    pass
+
+
+class DownloadError(Exception):
+    pass
+
+
+class PreDownloadError(Exception):
+    pass
+
+
+class PostDownloadError(Exception):
     pass
 
 
@@ -280,15 +300,19 @@ def download_file(download_url, absolute_path_file, file_name, chunk_size=4096 *
 
 
 class Download(object):
-    download_url = None
-    storage_file_name = None
-    short_file_name = None
+    parent_path = None
     chunk_size = 4096 * 1024
     retry = 3
+    timeout = (10, 60)
 
-    def __init__(self, chunk_size=4096 * 1024, retry=3, **kwargs):
-        self.chunk_size = chunk_size if isinstance(chunk_size, int) and chunk_size < 4096 * 1024 else chunk_size
-        self.retry = retry if isinstance(retry, int) and retry < 10 else 3
+    # download_url = None
+    # storage_file_name = None
+    # file_name = None
+
+    def __init__(self, chunk_size=None, retry=None, **kwargs):
+        self.chunk_size = chunk_size if isinstance(chunk_size,
+                                                   int) and chunk_size < self.chunk_size * 2 else self.chunk_size
+        self.retry = retry if isinstance(retry, int) and retry < self.retry * 2 else self.retry
         self.get_kwargs(**kwargs)
 
     def get_kwargs(self, **kwargs):
@@ -302,39 +326,387 @@ class Download(object):
         except:
             raise NotImplementedError(f'get_kwargs error: {traceback.format_exc()}')
 
-    def get_attribute_download_url(self, **kwargs):
-        self.download_url = str(kwargs.get('url')).strip() if kwargs.get('url') and str(kwargs.get('url')).startswith(
-            "http") else None
-        return self.download_url
+    # def get_attribute_download_url(self, **kwargs):
+    #     self.download_url = str(kwargs.get('url')).strip() if kwargs.get('url') and str(kwargs.get('url')).startswith(
+    #         "http") else None
+    #     return self.download_url
 
-    def get_attribute_storage_file_name(self, **kwargs):
-        self.storage_file_name = str(kwargs.get('storage_file_name')).strip() if kwargs.get('storage_file_name') else ''
-        return self.storage_file_name
+    def get_attribute_parent_path(self, **kwargs):
+        """
+        Get parent path.
+        If parent_path exists, then get the absolute parent path of parent_path
+        If parent_path is None, then get current absolute path of the file
+        :param kwargs:
+        :return:
+        """
+        _parent_path = str(kwargs.get('parent_path')).strip() if kwargs.get('parent_path') else None
+        if _parent_path is None:
+            self.parent_path = os.path.dirname(os.path.abspath(__file__))
+        elif os.path.isabs(_parent_path):
+            self.parent_path = _parent_path
+        else:
+            current_path = os.path.dirname(os.path.abspath(__file__))
+            self.parent_path = os.path.join(current_path, _parent_path)
+        return self.parent_path
 
-    def get_attribute_short_file_name(self, **kwargs):
-        self.short_file_name = str(kwargs.get('short_file_name')).strip() if kwargs.get('short_file_name') else None
-        return self.short_file_name
+    # def get_attribute_storage_file_name(self, **kwargs):
+    #     self.storage_file_name = str(kwargs.get('storage_file_name')).strip() if kwargs.get('storage_file_name') else ''
+    #     return self.storage_file_name
+
+    # def get_attribute_file_name(self, **kwargs):
+    #     self.file_name = str(kwargs.get('file_name')).strip() if kwargs.get('file_name') else None
+    #     return self.file_name
+
+    @staticmethod
+    def get_temp_file_name(absolute_path_file, **kwargs):
+        return f"{absolute_path_file}.tmp"
+
+    @staticmethod
+    def get_file_size(file_name):
+        return os.path.getsize(file_name)
+
+    def check_temp_file_exists(self, absolute_path_file, **kwargs):
+        """
+        check if temp file exists
+        :param absolute_path_file:
+        :param kwargs:
+        :return: The size of temp file
+        """
+        _temp_file = self.get_temp_file_name(absolute_path_file, **kwargs)
+        if os.path.isfile(_temp_file):
+            _temp_size = self.get_file_size(_temp_file)
+            return _temp_size
+        else:
+            return 0
+
+    @staticmethod
+    def get_download_file_size(download_url, absolute_path_file, file_name, retry, timeout, **kwargs):
+        # res_length = requests.get(download_url, stream=True)
+        headers = {
+            'Connection': 'keep-alive',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, '
+                          'like Gecko) Chrome/58.0.3029.110 Safari/537.36 SE 2.X MetaSr 1.0'
+        }
+
+        error_msg = None
+        for i in range(retry):
+            try:
+                with closing(
+                        download_file_requester.get_and_confirm_status(url=download_url, stream=True, headers=headers,
+                                                                       timeout=timeout)) as res:
+                    total_size = int(res.headers['Content-Length'])
+                    return total_size
+            except RequestException as e:
+                error_msg = f"Download failed:{file_name}, storage path is {absolute_path_file}," \
+                            f"RequestException error: {repr(e)}"
+                continue
+            except Exception as e:
+                error_msg = f"Download failed:{file_name}, storage path is {absolute_path_file}, " \
+                            f"undefined error: {traceback.format_exc()}"
+                raise DownloadError(error_msg)
+        else:
+            if error_msg is not None:
+                raise DownloadError(error_msg)
+            else:
+                raise DownloadError(
+                    f"Download failed:{file_name}, storage path is {absolute_path_file}, unknown error")
+
+    def get_absolute_path_file(self, storage_file_name, **kwargs):
+        """
+        Get absolute path of file.
+        If storage_file_name is absolute path, then get storage_file_name.
+        If storage_file_name is relative path and parent_path is not None, then get /parent_path/storage_file_name.
+        If storage_file_name is relative path and parent_path is None, then get /current path/storage_file_name.
+        :param storage_file_name: storage file path and filename
+        :param kwargs:
+        :return: absolute path of file or None
+        """
+        try:
+            if os.path.isabs(storage_file_name) is False and self.parent_path:
+                _absolute_path_file = os.path.join(self.parent_path, storage_file_name)
+            else:
+                _absolute_path_file = os.path.abspath(storage_file_name)
+            return _absolute_path_file
+        except Exception as e:
+            print(f'Exception: {repr(e)}')
+
+    @staticmethod
+    def get_parent_path(self, absolute_path_file, **kwargs):
+        try:
+            _parent_path = os.path.dirname(os.path.abspath(absolute_path_file))
+
+            if os.path.exists(_parent_path) is False:
+                # exist_ok = True, if directory exists, no error will be reported.
+                os.makedirs(_parent_path, exist_ok=True)
+            return _parent_path
+        except FileExistsError as e:
+            print(f'FileExistsError: {repr(e)}')
+
+    @staticmethod
+    def get_file_name(absolute_path_file, **kwargs):
+        _file_name = os.path.basename(absolute_path_file)
+        return str(_file_name).strip()
+
+    # def get_download_params(self, storage_file_name, chunk_size, retry, **kwargs):
+    def get_download_params(self, storage_file_name, **kwargs):
+        kwargs['absolute_path_file'] = self.get_absolute_path_file(storage_file_name, **kwargs)
+        assert kwargs.get('absolute_path_file'), f"storage_file_name {storage_file_name} invalid"
+        # kwargs['chunk_size'] = chunk_size if isinstance(chunk_size,
+        #                                                 int) and chunk_size < 4096 * 1024 else self.chunk_size
+        # kwargs['retry'] = retry if isinstance(retry, int) and retry < 10 else self.retry
+
+        kwargs['temp_size'] = self.check_temp_file_exists(**kwargs)
+        kwargs['file_name'] = self.get_file_name(**kwargs)
+        return kwargs
+
+    @staticmethod
+    def get_download_url(download_url, **kwargs):
+        _download_url = str(download_url).strip() if download_url and str(download_url).strip() else ''
+        if _download_url.startswith('http') is False:
+            _download_url = f"http://{_download_url}"
+        assert is_url(_download_url) is True, \
+            f"Download {_download_url} invalid, storage_file_name {kwargs.get('storage_file_name')}"
+        kwargs['download_url'] = _download_url
+        return kwargs
+
+    def get_total_size(self, **kwargs):
+        try:
+            kwargs['total_size'] = self.get_download_file_size(**kwargs)
+            print(f"***** kwargs: {kwargs}")
+            return kwargs
+        except:
+            raise
+
+    def pre_download(self, **kwargs):
+        """
+        prefix handle download
+        :param kwargs:
+        :return:
+        """
+        try:
+            _download_params_kwargs = self.get_download_params(**kwargs)
+            download_url_kwargs = self.get_download_url(**_download_params_kwargs)
+            return self.get_total_size(**download_url_kwargs)
+        except Exception as e:
+            error_msg = f"Download failed: download_url {kwargs.get('download_url')}, " \
+                        f"storage_file_name {kwargs.get('storage_file_name')}, PreDownloadError: {repr(e)}"
+            raise PreDownloadError(error_msg)
+
+    def download_small_file(self, download_url, absolute_path_file, file_name, retry, timeout, **kwargs):
+        headers = {
+            'Connection': 'keep-alive',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, '
+                          'like Gecko) Chrome/58.0.3029.110 Safari/537.36 SE 2.X MetaSr 1.0'
+        }
+
+        error_msg = None
+        for i in range(retry):
+            try:
+                with closing(
+                        download_file_requester.get_and_confirm_status(url=download_url, stream=True, headers=headers,
+                                                                       timeout=timeout)) as res:
+                    with open(self.get_temp_file_name(absolute_path_file), mode='wb') as temp_file:
+                        temp_file.write(res.content)
+                return temp_file.name
+            except RequestException as e:
+                error_msg = f"Download failed::{file_name}, storage path is {absolute_path_file}," \
+                            f"RequestException error: {repr(e)}"
+                continue
+            except Exception as e:
+                error_msg = f"Download failed:{file_name}, storage path is {absolute_path_file}, " \
+                            f"undefined error: {traceback.format_exc()}"
+                raise DownloadError(error_msg)
+        else:
+            if error_msg is not None:
+                raise DownloadError(error_msg)
+            else:
+                raise DownloadError(
+                    f"Download failed:{file_name}, storage path is {absolute_path_file}, unknown error")
+
+    def download_large_file(self, download_url, absolute_path_file, file_name, chunk_size, retry, timeout, temp_size,
+                            **kwargs):
+        headers = {
+            'Range': 'bytes=%d-' % temp_size,
+            'Connection': 'keep-alive',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, '
+                          'like Gecko) Chrome/58.0.3029.110 Safari/537.36 SE 2.X MetaSr 1.0'
+        }
+
+        error_msg = None
+        for i in range(retry):
+            try:
+                with closing(
+                        download_file_requester.get_url(url=download_url, stream=True, headers=headers,
+                                                        timeout=timeout)) as res:
+                    with open(self.get_temp_file_name(absolute_path_file), mode='ab+') as temp_file:
+                        for chunk in res.iter_content(chunk_size=chunk_size):
+                            if chunk:
+                                temp_file.write(chunk)
+                                # temp_file.flush()
+
+                # print(self.get_file_size(temp_file.name))
+                # print(kwargs.get('total_size'))
+                if self.get_file_size(temp_file.name) != kwargs.get('total_size'):
+                    os.remove(temp_file.name)
+                    error_msg = f"Download failed:{file_name}, storage path is " \
+                                f"{self.get_temp_file_name(absolute_path_file)}," \
+                                f"error: incomplete or corrupt downloaded file"
+                    raise DownloadError(error_msg)
+                return temp_file.name
+            except RequestException as e:
+                error_msg = f"Download failed:{file_name}, storage path is {absolute_path_file}," \
+                            f"RequestException error: {repr(e)}"
+                continue
+            except DownloadError:
+                raise
+            except Exception as e:
+                error_msg = f"Download failed:{file_name}, storage path is {absolute_path_file}, " \
+                            f"undefined error:{traceback.format_exc()}"
+                raise DownloadError(error_msg)
+        else:
+            if error_msg is not None:
+                raise DownloadError(error_msg)
+            else:
+                raise DownloadError(
+                    f"Download failed:{file_name}, storage path is {absolute_path_file}, unknown error")
+
+    def handle_download(self, **kwargs):
+        try:
+            if kwargs.get('total_size', 0) < kwargs.get('chunk_size', self.chunk_size):
+                kwargs['temp_file'] = self.download_small_file(**kwargs)
+            else:
+                kwargs['temp_file'] = self.download_large_file(**kwargs)
+                # kwargs['temp_file'] = self.download_small_file(**kwargs)
+            return kwargs
+        except DownloadError as e:
+            raise
+        except Exception as e:
+            error_msg = f"Download failed: download_url {kwargs.get('download_url')}, " \
+                        f"absolute_path_file {kwargs.get('absolute_path_file')}, DownloadError {repr(e)}"
+            raise DownloadError(error_msg)
+
+    @staticmethod
+    def filename_fix_existing(absolute_path_file, **kwargs):
+        """Expands name portion of absolute_path_file with numeric ' (x)' suffix to
+        return absolute_path_file that doesn't exist already.
+        """
+        dirname = u'.'
+        name_ext = absolute_path_file.rsplit('.', 1)
+        name, ext = name_ext[0], '' if len(name_ext) == 1 else name_ext
+        names = [x for x in os.listdir(dirname) if x.startswith(name)]
+        names = [x.rsplit('.', 1)[0] for x in names]
+        suffixes = [x.replace(name, '') for x in names]
+        # filter suffixes that match ' (x)' pattern
+        suffixes = [x[2:-1] for x in suffixes if x.startswith(' (') and x.endswith(')')]
+        indexes = [int(x) for x in suffixes if set(x) <= set('0123456789')]
+        idx = 1
+        if indexes:
+            idx += sorted(indexes)[-1]
+        if ext:
+            return '%s (%d).%s' % (name, idx, ext)
+        else:
+            return '%s (%d)' % (name, idx)
+
+    def rename_temp_file(self, absolute_path_file, temp_file, **kwargs):
+        if os.path.exists(absolute_path_file):
+            absolute_path_file = self.filename_fix_existing(absolute_path_file, **kwargs)
+        shutil.move(temp_file, absolute_path_file)
+        return absolute_path_file
+
+    def post_download(self, **kwargs):
+        try:
+            file_name = self.rename_temp_file(**kwargs)
+            return file_name
+        except Exception as e:
+            error_msg = f"Download failed: download_url {kwargs.get('download_url')}, " \
+                        f"absolute_path_file {kwargs.get('absolute_path_file')}, PostDownloadError: {repr(e)}"
+            raise PostDownloadError(error_msg)
+
+    def get_params_dict(self, download_url, storage_file_name, chunk_size, retry, timeout, **kwargs):
+        params = kwargs
+        params['download_url'] = str(kwargs.get('url')).strip() if download_url is None and kwargs.get(
+            'url') else download_url
+        params['storage_file_name'] = str(kwargs.get('filename')).strip() if storage_file_name is None and kwargs.get(
+            'filename') else storage_file_name
+        params['chunk_size'] = chunk_size if isinstance(chunk_size,
+                                                        int) and chunk_size < 4096 * 1024 else self.chunk_size
+        params['retry'] = retry if isinstance(retry, int) and retry < 10 else self.retry
+        params['timeout'] = timeout if timeout and isinstance(timeout, (int, tuple)) else self.timeout
+        return params
+
+    def download(self, download_url=None, storage_file_name=None, chunk_size=4096 * 1024, retry=3, timeout=(10, 60),
+                 **kwargs):
+        try:
+            params = self.get_params_dict(download_url, storage_file_name, chunk_size, retry, timeout, **kwargs)
+            _params = self.pre_download(**params)
+            _result = self.handle_download(**_params)
+            _file_name = self.post_download(**_result)
+            return _file_name
+        except (PreDownloadError, DownloadError, PostDownloadError) as e:
+            raise
+        except Exception as e:
+            raise DownloadError(
+                f"Download failed: download_url {download_url}, storage_file_name {storage_file_name}, "
+                f"error {repr(e)}")
 
 
 if __name__ == "__main__":
+    # if len(sys.argv) == 1:
+    #     print("请选择正确的参数：'normal' or 'force'")
+    #     sys.exit(0)
+    #     # exec_action = ['users', 'mysql', 'database', 'table', 'queryuser', 'querymysql']
+    # else:
+    #     if len(sys.argv) == 2 and sys.argv[1] == 'normal':
+    #         force_download = False
+    #     elif len(sys.argv) == 2 and sys.argv[1] == 'force':
+    #         force_download = True
+    #     else:
+    #         print("请选择正确的参数：'normal' or 'force'")
+    #         sys.exit(0)
+    #
+    # url = 'http://dl.videocc.net/5c0ad4c56c/source_5c0ad4c56c85e31c9e3728e6550dbfd4_5?downloadId=5c0ad4c56c' \
+    #       '&times=1613142804599&ran=4a43ba4740b1d1ccb962dc3ce6634fc0&sign=7d36967964856d72aa286f4c3008c447'
+    # file_path = '/data/download'
+    # filename = 'test1'
+    # # force_download = False
+    #
+    # download_video(url, file_path, filename)
 
-    if len(sys.argv) == 1:
-        print("请选择正确的参数：'normal' or 'force'")
-        sys.exit(0)
-        # exec_action = ['users', 'mysql', 'database', 'table', 'queryuser', 'querymysql']
-    else:
-        if len(sys.argv) == 2 and sys.argv[1] == 'normal':
-            force_download = False
-        elif len(sys.argv) == 2 and sys.argv[1] == 'force':
-            force_download = True
-        else:
-            print("请选择正确的参数：'normal' or 'force'")
-            sys.exit(0)
+    import os
 
-    url = 'http://dl.videocc.net/5c0ad4c56c/source_5c0ad4c56c85e31c9e3728e6550dbfd4_5?downloadId=5c0ad4c56c' \
-          '&times=1613142804599&ran=4a43ba4740b1d1ccb962dc3ce6634fc0&sign=7d36967964856d72aa286f4c3008c447'
-    file_path = '/data/download'
-    filename = 'test1'
-    # force_download = False
+    print(os.path)
+    kwargs = {
+        'download_url': 'http://dl.videocc.net/5c0ad4c56c/source_5c0ad4c56c5554d675e13b1244c483d2_5?downloadId=5c0ad4c56c&times=1615300644701&ran=647dfc4985c4cc41928adc98380b98d8&sign=f3762ce9324c67ce1964325193c7d066',
+        'storage_file_name': '5c0ad4c56c5554d675e13b1244c483d2_5',
+        'chunk_size': 4096 * 1024,
+        'retry': 3,
+        'timeout': (10, 120)
+    }
 
-    download_video(url, file_path, filename)
+    dl = Download()
+    print("***" * 30)
+    file = dl.download(**kwargs)
+    print(f"file: {file}")
+    print("***" * 30)
+
+    # headers = {
+    #     'Connection': 'keep-alive',
+    #     'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, '
+    #                   'like Gecko) Chrome/58.0.3029.110 Safari/537.36 SE 2.X MetaSr 1.0'
+    # }
+
+    # r = requests.get(kwargs.get('download_url'), stream=True, headers=headers)
+    # file_size = int(r.headers['content-length'])
+    # print(f"file_size: {file_size}")
+    # f = open("test", "wb")
+    # for chunk in r.iter_content(chunk_size=1024):
+    #     if chunk:
+    #         f.write(chunk)
+
+    # with closing(requests.get(kwargs.get('download_url'), stream=True, headers=headers)) as r:
+    #     file_size = int(r.headers['content-length'])
+    #     print(f"file_size: {file_size}")
+    #     f = open("test", "wb")
+    #     for chunk in r.iter_content(chunk_size=1024):
+    #         if chunk:
+    #             f.write(chunk)

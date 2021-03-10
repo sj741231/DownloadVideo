@@ -60,7 +60,7 @@ class Requester(object):
     This default class can handle simple authentication only.
     """
 
-    VALID_STATUS_CODES = [200, 400]  # define 200 success and 400 error
+    VALID_STATUS_CODES = [200]  # define 200 success
     AUTH_COOKIE = None
 
     def __init__(self, *args, **kwargs):
@@ -134,7 +134,8 @@ class Requester(object):
         if files:
             request_kwargs['files'] = files
 
-        request_kwargs['timeout'] = self.timeout
+        request_kwargs['timeout'] = request_kwargs.get('timeout') if request_kwargs.get('timeout') and isinstance(
+            request_kwargs.get('timeout'), (int, tuple)) else self.timeout
 
         return request_kwargs
 
@@ -157,25 +158,29 @@ class Requester(object):
             )
         return url
 
-    def get_url(self, url, params=None, headers=None, allow_redirects=True, stream=False):
+    def get_url(self, url, params=None, headers=None, allow_redirects=True, stream=False, timeout=None):
         request_kwargs = self.get_request_dict(
             params=params,
             headers=headers,
             allow_redirects=allow_redirects,
-            stream=stream
+            stream=stream,
+            timeout=timeout
         )
         # params = None, data = None, headers = None, cookies = None, files = None,
         # auth = None, timeout = None, allow_redirects = True, proxies = None,
         # hooks = None, stream = None, verify = None, cert = None, json = None
         return self.session.get(self._update_url_scheme(url), **request_kwargs)
 
-    def post_url(self, url, params=None, data=None, files=None, headers=None, allow_redirects=True, **kwargs):
+    def post_url(self, url, params=None, data=None, files=None, headers=None, allow_redirects=True, timeout=None,
+                 **kwargs):
         request_kwargs = self.get_request_dict(
             params=params,
             data=data,
             files=files,
             headers=headers,
-            allow_redirects=allow_redirects, **kwargs
+            allow_redirects=allow_redirects,
+            timeout=timeout,
+            **kwargs
         )
         # params = None, data = None, headers = None, cookies = None, files = None,
         # auth = None, timeout = None, allow_redirects = True, proxies = None,
@@ -183,7 +188,7 @@ class Requester(object):
         return self.session.post(self._update_url_scheme(url), **request_kwargs)
 
     def post_multipart_and_confirm_status(self, url, params=None, data=None, files=None, headers=None, valid=None,
-                                          allow_redirects=True):
+                                          allow_redirects=True, timeout=None):
         valid = valid or self.VALID_STATUS_CODES
         if not headers and not files:
             headers = {
@@ -204,7 +209,8 @@ class Requester(object):
             data,
             files,
             headers,
-            allow_redirects)
+            allow_redirects,
+            timeout=timeout)
         if response.status_code not in valid:
             raise UnDefineException(
                 'Operation failed. url={u}, data={d}, headers={h}, status={s}, text={t}'.format(
@@ -216,12 +222,13 @@ class Requester(object):
             )
         return response
 
-    def post_xml_and_confirm_status(self, url, params=None, data=None, valid=None):
+    def post_xml_and_confirm_status(self, url, params=None, data=None, valid=None, timeout=None):
         headers = {'Content-Type': 'text/xml'}
-        return self.post_and_confirm_status(url, params=params, data=data, headers=headers, valid=valid)
+        return self.post_and_confirm_status(url, params=params, data=data, headers=headers, valid=valid,
+                                            timeout=timeout)
 
     def post_and_confirm_status(self, url, params=None, data=None, files=None, headers=None, valid=None,
-                                allow_redirects=True):
+                                allow_redirects=True, timeout=None):
         valid = valid or self.VALID_STATUS_CODES
         if not headers and not files:
             headers = {'Content-Type': 'application/x-www-form-urlencoded'}
@@ -234,7 +241,8 @@ class Requester(object):
             data,
             files,
             headers,
-            allow_redirects)
+            allow_redirects,
+            timeout=timeout)
         if response.status_code not in valid:
             raise UnDefineException(
                 'Operation failed. url={u}, data={d}, headers={h}, status={s}, text={t}'.format(
@@ -246,9 +254,9 @@ class Requester(object):
             )
         return response
 
-    def get_and_confirm_status(self, url, params=None, headers=None, valid=None, stream=False):
+    def get_and_confirm_status(self, url, params=None, headers=None, valid=None, stream=False, timeout=None):
         valid = valid or self.VALID_STATUS_CODES
-        response = self.get_url(url, params, headers, stream=stream)
+        response = self.get_url(url, params, headers, stream=stream, timeout=timeout)
         if response.status_code not in valid:
             if response.status_code == 405:  # POST required
                 raise PostRequired('POST required for url {u}'.format(u=str(url)))
