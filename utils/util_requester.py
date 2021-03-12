@@ -11,7 +11,7 @@ from requests_toolbelt import MultipartEncoder
 from html.parser import HTMLParser
 from bs4 import BeautifulSoup
 import uuid
-from settings import BASE_URL
+from settings import BASE_URL, DL_BASE_URL
 
 
 class UnDefineException(Exception):
@@ -60,7 +60,7 @@ class Requester(object):
     This default class can handle simple authentication only.
     """
 
-    VALID_STATUS_CODES = [200, 400]  # define 200 success and 400 error
+    VALID_STATUS_CODES = [200]  # define 200 success
     AUTH_COOKIE = None
 
     def __init__(self, *args, **kwargs):
@@ -68,7 +68,7 @@ class Requester(object):
         password = None
         ssl_verify = True
         cert = None
-        baseurl = None
+        base_url = None
         timeout = (10, 60)
 
         if len(args) == 1:
@@ -80,20 +80,20 @@ class Requester(object):
         elif len(args) == 4:
             username, password, ssl_verify, cert = args
         elif len(args) == 5:
-            username, password, ssl_verify, cert, baseurl = args
+            username, password, ssl_verify, cert, base_url = args
         elif len(args) == 6:
-            username, password, ssl_verify, cert, baseurl, timeout = args
+            username, password, ssl_verify, cert, base_url, timeout = args
         elif len(args) > 6:
             raise ValueError("To much positional arguments given!")
 
         self.key = kwargs.get('appkey') if kwargs.get('appkey') is not None else None
-        self.baseurl = kwargs.get('url') if kwargs.get('url') is not None else None
-        self.timeout = kwargs.get('timeout') if kwargs.get('timeout') \
-                                                and isinstance(kwargs.get('timeout'), (tuple, int)) else timeout
+        self.base_url = kwargs.get('url') if kwargs.get('url') is not None else None
+        self.timeout = kwargs.get('timeout') if kwargs.get('timeout') and isinstance(kwargs.get('timeout'),
+                                                                                     (tuple, int)) else timeout
 
-        baseurl = kwargs.get('baseurl', baseurl)
+        base_url = kwargs.get('base_url', base_url)
         # self.base_scheme = urlparse.urlsplit(
-        self.base_scheme = urlsplit(baseurl).scheme if baseurl else None
+        self.base_scheme = urlsplit(base_url).scheme if base_url else None
 
         self.username = kwargs.get('username', username)
         self.password = kwargs.get('password', password)
@@ -108,39 +108,40 @@ class Requester(object):
         self.session = requests.Session()
 
     def get_request_dict(self, params=None, data=None, files=None, headers=None, **kwargs):
-        requestKwargs = kwargs
+        request_kwargs = kwargs
         if self.username:
-            requestKwargs['auth'] = (self.username, self.password)
+            request_kwargs['auth'] = (self.username, self.password)
 
         if params:
             assert isinstance(params, dict), 'params must be a dict, got %s' % repr(params)
-            requestKwargs['params'] = params
+            request_kwargs['params'] = params
 
         if headers:
             assert isinstance(headers, dict), 'headers must be a dict, got %s' % repr(headers)
-            requestKwargs['headers'] = headers
+            request_kwargs['headers'] = headers
 
         if self.AUTH_COOKIE:
-            currentheaders = requestKwargs.get('headers', {})
+            currentheaders = request_kwargs.get('headers', {})
             currentheaders.update({'Cookie': self.AUTH_COOKIE})
-            requestKwargs['headers'] = currentheaders
+            request_kwargs['headers'] = currentheaders
 
-        requestKwargs['verify'] = self.ssl_verify
-        requestKwargs['cert'] = self.cert
+        request_kwargs['verify'] = self.ssl_verify
+        request_kwargs['cert'] = self.cert
 
         if data:
-            requestKwargs['data'] = data
+            request_kwargs['data'] = data
 
         if files:
-            requestKwargs['files'] = files
+            request_kwargs['files'] = files
 
-        requestKwargs['timeout'] = self.timeout
+        request_kwargs['timeout'] = request_kwargs.get('timeout') if request_kwargs.get('timeout') and isinstance(
+            request_kwargs.get('timeout'), (int, tuple)) else self.timeout
 
-        return requestKwargs
+        return request_kwargs
 
     def _update_url_scheme(self, url):
         """
-        Updates scheme of given url to the one used in url baseurl.
+        Updates scheme of given url to the one used in url base_url.
         """
         if self.base_scheme and not url.startswith("%s://" % self.base_scheme):
             # url_split = urlparse.urlsplit(url)
@@ -157,33 +158,37 @@ class Requester(object):
             )
         return url
 
-    def get_url(self, url, params=None, headers=None, allow_redirects=True, stream=False):
-        requestKwargs = self.get_request_dict(
+    def get_url(self, url, params=None, headers=None, allow_redirects=True, stream=False, timeout=None):
+        request_kwargs = self.get_request_dict(
             params=params,
             headers=headers,
             allow_redirects=allow_redirects,
-            stream=stream
+            stream=stream,
+            timeout=timeout
         )
         # params = None, data = None, headers = None, cookies = None, files = None,
         # auth = None, timeout = None, allow_redirects = True, proxies = None,
         # hooks = None, stream = None, verify = None, cert = None, json = None
-        return self.session.get(self._update_url_scheme(url), **requestKwargs)
+        return self.session.get(self._update_url_scheme(url), **request_kwargs)
 
-    def post_url(self, url, params=None, data=None, files=None, headers=None, allow_redirects=True, **kwargs):
-        requestKwargs = self.get_request_dict(
+    def post_url(self, url, params=None, data=None, files=None, headers=None, allow_redirects=True, timeout=None,
+                 **kwargs):
+        request_kwargs = self.get_request_dict(
             params=params,
             data=data,
             files=files,
             headers=headers,
-            allow_redirects=allow_redirects, **kwargs
+            allow_redirects=allow_redirects,
+            timeout=timeout,
+            **kwargs
         )
         # params = None, data = None, headers = None, cookies = None, files = None,
         # auth = None, timeout = None, allow_redirects = True, proxies = None,
         # hooks = None, stream = None, verify = None, cert = None, json = None
-        return self.session.post(self._update_url_scheme(url), **requestKwargs)
+        return self.session.post(self._update_url_scheme(url), **request_kwargs)
 
     def post_multipart_and_confirm_status(self, url, params=None, data=None, files=None, headers=None, valid=None,
-                                          allow_redirects=True):
+                                          allow_redirects=True, timeout=None):
         valid = valid or self.VALID_STATUS_CODES
         if not headers and not files:
             headers = {
@@ -204,7 +209,8 @@ class Requester(object):
             data,
             files,
             headers,
-            allow_redirects)
+            allow_redirects,
+            timeout=timeout)
         if response.status_code not in valid:
             raise UnDefineException(
                 'Operation failed. url={u}, data={d}, headers={h}, status={s}, text={t}'.format(
@@ -216,12 +222,13 @@ class Requester(object):
             )
         return response
 
-    def post_xml_and_confirm_status(self, url, params=None, data=None, valid=None):
+    def post_xml_and_confirm_status(self, url, params=None, data=None, valid=None, timeout=None):
         headers = {'Content-Type': 'text/xml'}
-        return self.post_and_confirm_status(url, params=params, data=data, headers=headers, valid=valid)
+        return self.post_and_confirm_status(url, params=params, data=data, headers=headers, valid=valid,
+                                            timeout=timeout)
 
     def post_and_confirm_status(self, url, params=None, data=None, files=None, headers=None, valid=None,
-                                allow_redirects=True):
+                                allow_redirects=True, timeout=None):
         valid = valid or self.VALID_STATUS_CODES
         if not headers and not files:
             headers = {'Content-Type': 'application/x-www-form-urlencoded'}
@@ -234,7 +241,8 @@ class Requester(object):
             data,
             files,
             headers,
-            allow_redirects)
+            allow_redirects,
+            timeout=timeout)
         if response.status_code not in valid:
             raise UnDefineException(
                 'Operation failed. url={u}, data={d}, headers={h}, status={s}, text={t}'.format(
@@ -246,9 +254,9 @@ class Requester(object):
             )
         return response
 
-    def get_and_confirm_status(self, url, params=None, headers=None, valid=None, stream=False):
+    def get_and_confirm_status(self, url, params=None, headers=None, valid=None, stream=False, timeout=None):
         valid = valid or self.VALID_STATUS_CODES
-        response = self.get_url(url, params, headers, stream=stream)
+        response = self.get_url(url, params, headers, stream=stream, timeout=timeout)
         if response.status_code not in valid:
             if response.status_code == 405:  # POST required
                 raise PostRequired('POST required for url {u}'.format(u=str(url)))
@@ -263,19 +271,22 @@ class Requester(object):
         return response
 
 
-requester = Requester(username=None, password=None, baseurl=BASE_URL, ssl_verify=True, cert=None, timeout=(15, 60),
+requester = Requester(username=None, password=None, base_url=BASE_URL, ssl_verify=True, cert=None, timeout=(10, 60),
                       **dict())
+
+download_file_requester = Requester(username=None, password=None, base_url=DL_BASE_URL, ssl_verify=True, cert=None,
+                                    timeout=(10, 60), **dict())
 
 if __name__ == "__main__":
     # _username = None
     # _password = None
     # _timeout = (15, 300)
-    # _baseurl = "http://demo.polyv.net/dlsource/5c0ad4c56c.php"
+    # _base_url = "http://demo.polyv.net/dlsource/5c0ad4c56c.php"
     # _ssl_verify = True
     # _cert = None
     # kwargs = dict()
 
-    # requester = Requester(username=None, password=None, baseurl=None, ssl_verify=True, cert=None, timeout=(15, 60),
+    # requester = Requester(username=None, password=None, base_url=None, ssl_verify=True, cert=None, timeout=(15, 60),
     #                       **dict())
 
     data = {"vid_text": "5c0ad4c56c85e31c9e3728e6550dbfd4_5"}
