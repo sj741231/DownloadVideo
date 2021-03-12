@@ -1,5 +1,6 @@
 # -*- coding:utf-8 -*-
 __author__ = 'shijin'
+
 from openpyxl import Workbook  # 新增
 from openpyxl import load_workbook  # 加载已有
 import collections
@@ -222,7 +223,8 @@ class HandleXLSX(object):
     def close(self):
         self._work_book.close()
 
-    def create_row_dict(self, row_title_list, row_value_list, **kwargs):
+    @staticmethod
+    def create_row_dict(row_title_list, row_value_list, **kwargs):
         """
         create row data structure
         :param row_title_list: title list of table
@@ -235,7 +237,8 @@ class HandleXLSX(object):
                 _row_dict[key] = row_value_list[index]
         return _row_dict
 
-    def prepare_write_value(self, row_dict, result):
+    @staticmethod
+    def prepare_write_value(row_dict, result):
         assert isinstance(row_dict, dict), "row_dict must be OrderedDict"
         x = int(row_dict.get('sn')) + 1
         y = list(row_dict.keys()).index('result')
@@ -253,14 +256,14 @@ class HandleXLSX(object):
 if __name__ == "__main__":
     print("###" * 30)
     filename = 'vid-20210214.xlsx'
-    xlsl = HandleXLSX(filename)
-    rows = xlsl.generator_rows_value_iterator(sheet_name='listing', start_point=5, end_point=10)
+    xls = HandleXLSX(filename)
+    rows = xls.generator_rows_value_iterator(sheet_name='listing', start_point=5, end_point=10)
 
     for i in rows:
         print("row: ", i)
 
     print("***" * 30)
-    rows = xlsl.generate_row_object_iterator(sheet_name='listing', start_point=5, end_point=10)
+    rows = xls.generate_row_object_iterator(check_file=False, sheet_name='listing', start_point=5, end_point=10)
 
     for j in rows:
         print("row: ", j, j.__dict__)

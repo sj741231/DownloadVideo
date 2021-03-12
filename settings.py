@@ -18,4 +18,4 @@ FORCE_DOWNLOAD = False
 MAX_WORKERS = 4
 
 # Thread task execution waiting time(s). as_completed
-TASK_WAITING_TIME = 3600 * 2
+TASK_WAITING_TIME = 3600 * 6

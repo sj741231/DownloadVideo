@@ -28,4 +28,6 @@
     b. python3.9 handle.py -h
 2. 执行命令 *
     a. python3.9 handle.py --file 'vid-20210214.xlsx' --sheet 'listing' --start 2 --end 4
-    b. python3.9 handle.py -f 'vid-20210214.xlsx' -t 'listing' -s 2 -e 4
+    b. python3.9 handle.py -check --file 'vid-20210214.xlsx' --sheet 'listing' --start 2 --end 4
+    c. python3.9 handle.py -f 'vid-20210214.xlsx' -t 'listing' -s 2 -e 4
+    d. python3.9 handle.py -c -f 'vid-20210214.xlsx' -t 'listing' -s 2 -e 4

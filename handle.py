@@ -5,11 +5,12 @@ import os
 import sys
 import getopt
 from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError
-from utils.util_logfile import nlogger, flogger, traceback
+from utils.util_logfile import nlogger, flogger, slogger, traceback
 from utils.util_xlsx import HandleXLSX
 from utils.util_requester import BeautifulSoup, requester, RequestException
 from utils.util_re import is_url
 from utils.util_download import get_file_path, download_video, check_file_exist, download_file, Download
+from utils.util_readfile import guess_file_type
 from datetime import datetime
 from settings import BASE_URL, TASK_WAITING_TIME, FORCE_DOWNLOAD, MAX_WORKERS, DL_ROOT_PATH
 from row_object import RowStatus
@@ -142,7 +143,8 @@ def download_video_task(row_object, root_path=DL_ROOT_PATH, force_download=FORCE
         check_row_object(row_object, **kwargs)
         _pre_row_object = get_storage_absolute_path(row_object, root_path, force_download, **kwargs)
         _mid_row_object = get_video_url(_pre_row_object, **kwargs)
-        _post_row_object = download_video_from_url(_mid_row_object, **kwargs)
+        # _post_row_object = download_video_from_url(_mid_row_object, **kwargs)
+        _post_row_object = download_file_from_url(_mid_row_object, **kwargs)
         return _post_row_object
     except AssertionError as e:
         row_object.status = RowStatus.ERROR.value
@@ -176,10 +178,10 @@ def download_video_task(row_object, root_path=DL_ROOT_PATH, force_download=FORCE
         return row_object
     except Exception as e:
         row_object.status = RowStatus.ERROR.value
-        nlogger.error("{fn} sn:{s}, vid:{v}, undefined error: {e}".format(fn='download_video_task',
-                                                                          s=row_object.column_value['sn'],
-                                                                          v=row_object.column_value['vid'],
-                                                                          e=traceback.format_exc(), ))
+        nlogger.error("{fn} position:{p}, vid:{v}, undefined error: {e}".format(fn='download_video_task',
+                                                                                p=row_object.position,
+                                                                                v=row_object.column_value['vid'],
+                                                                                e=traceback.format_exc(), ))
         row_object.column_value['result'] = f'download_video_task undefined error: {str(e)}'
         _vid = row_object.column_value.get('vid', 'Unknown vid')
         flogger.error("download_video_task undefined failed:{f},DownloadVideoError:{e}".format(f=_vid, e=repr(e)))
@@ -235,15 +237,15 @@ def get_video_url(pre_row_object, **kwargs):
             if is_url(_temporary_url):
                 pre_row_object.temporary_url = _temporary_url
                 nlogger.info(
-                    "Get URL success, sn:{s}, vid:{v}, url:{u}.".format(s=pre_row_object.column_value.get('sn'),
-                                                                        v=pre_row_object.column_value.get('vid'),
-                                                                        u=pre_row_object.temporary_url))
+                    "Get URL success, position:{p}, vid:{v}, url:{u}.".format(p=pre_row_object.position,
+                                                                              v=pre_row_object.column_value.get('vid'),
+                                                                              u=pre_row_object.temporary_url))
                 return pre_row_object
             else:
                 raise ValueError(
-                    "Get URL invalid, sn:{s}, vid:{v}, url:{u}.".format(s=pre_row_object.column_value.get('sn'),
-                                                                        v=pre_row_object.column_value.get('vid'),
-                                                                        u=_temporary_url))
+                    "Get URL invalid, position:{p}, vid:{v}, url:{u}.".format(p=pre_row_object.position,
+                                                                              v=pre_row_object.column_value.get('vid'),
+                                                                              u=_temporary_url))
     except RequestException as e:
         nlogger.error("{fn} RequestException: {e}".format(fn='get_video_url', e=repr(e)))
         raise GetURLError("{fn} RequestException: {e}".format(fn='get_video_url', e=repr(e)))
@@ -337,19 +339,27 @@ def get_file_size_megabyte(dl_file_name):
 
 
 def set_row_object_status(mid_row_object, file_name, dl_file_name=None, **kwargs):
+    """
+    Set row object status, include result, file size and file type
+    :param mid_row_object: row object
+    :param file_name: file name
+    :param dl_file_name: download filename
+    :param kwargs:
+    :return:
+    """
     if dl_file_name:
         if RowStatus(mid_row_object.status).name == 'SKIP':
             mid_row_object.column_value['result'] = f'Already exists: {dl_file_name}'
             mid_row_object.column_value['size(MB)'] = f'{get_file_size_megabyte(dl_file_name)}'
-            mid_row_object.column_value['type'] = ''
+            mid_row_object.column_value['type'] = guess_file_type(dl_file_name)
         elif RowStatus(mid_row_object.status).name == 'FORCE':
             mid_row_object.column_value['result'] = f'Download again: {dl_file_name}'
             mid_row_object.column_value['size(MB)'] = f'{get_file_size_megabyte(dl_file_name)}'
-            mid_row_object.column_value['type'] = ''
+            mid_row_object.column_value['type'] = guess_file_type(dl_file_name)
         else:
             mid_row_object.column_value['result'] = f'Download successful: {dl_file_name}'
             mid_row_object.column_value['size(MB)'] = f'{get_file_size_megabyte(dl_file_name)}'
-            mid_row_object.column_value['type'] = ''
+            mid_row_object.column_value['type'] = guess_file_type(dl_file_name)
         mid_row_object.status = RowStatus.SUCCESS.value
     else:
         mid_row_object.column_value['result'] = f"Download failed: {file_name}"
@@ -368,17 +378,21 @@ def download_file_from_url(mid_row_object, **kwargs):
     """
     try:
         url = mid_row_object.temporary_url
+        position = mid_row_object.position
         file_name = f"{mid_row_object.column_value.get('vid')}"
         storage_absolute_path = mid_row_object.storage_absolute_path
 
         if RowStatus(mid_row_object.status).name == 'EXISTENCE':
             mid_row_object.column_value['result'] = f'EXISTENCE: {storage_absolute_path}'
-            nlogger.info('Download ignore: {f}, its storage path is {p}.'.format(f=file_name, p=storage_absolute_path))
+            nlogger.info(f'Download ignore: Position {position}, {file_name}, '
+                         f'its storage path is {storage_absolute_path}.')
         elif RowStatus(mid_row_object.status).name == 'NONEXISTENCE':
             mid_row_object.column_value['result'] = f'NONEXISTENCE: {storage_absolute_path}'
-            nlogger.info('Download ignore: {f}, it does not exist.'.format(f=file_name))
+            nlogger.info(f'Download ignore: Position {position}, {file_name}, it does not exist.')
         elif RowStatus(mid_row_object.status).name == 'SKIP':
             mid_row_object = set_row_object_status(mid_row_object, file_name, dl_file_name=storage_absolute_path)
+            nlogger.info(f'Download skip: Position {position}, {file_name}, '
+                         f'its storage path is {storage_absolute_path}.')
         else:
             kwargs['download_url'] = url
             kwargs['storage_file_name'] = storage_absolute_path
@@ -388,24 +402,36 @@ def download_file_from_url(mid_row_object, **kwargs):
 
             try:
                 dl_file_name = dl.download(**kwargs)
+                nlogger.info(f'Download success: Position {position}, {file_name}, '
+                             f'its storage path is {storage_absolute_path}.')
+                slogger.info(f'Download success: Position {position}, {file_name}, '
+                             f'its storage path is {storage_absolute_path}.')
             except Exception as e:
-                nlogger.error("{fn} dl.download error: {e}".format(fn='download_file_from_url', e=repr(e)))
+                nlogger.error(f'Download failed: Position {position}, {file_name}, '
+                              f'its storage path is {storage_absolute_path}, error: {repr(e)}.')
+                flogger.error(f'Download failed: Position {position}, {file_name}, '
+                              f'its storage path is {storage_absolute_path}.')
                 dl_file_name = None
 
             mid_row_object = set_row_object_status(mid_row_object, file_name, dl_file_name=dl_file_name)
-            # if dl_file_name:
-            #     if RowStatus(mid_row_object.status).name == 'FORCE':
-            #         mid_row_object.column_value['result'] = f'Download again: {dl_file_name}'
-            #     else:
-            #         mid_row_object.column_value['result'] = f'Download successful: {dl_file_name}'
-            #     mid_row_object.status = RowStatus.SUCCESS.value
-            # else:
-            #     mid_row_object.column_value['result'] = f"Download failed: {file_name}"
-            #     mid_row_object.status = RowStatus.FAILURE.value
         return mid_row_object
     except Exception as e:
         nlogger.error("{fn} error: {e}".format(fn='download_file_from_url', e=traceback.format_exc()))
         raise DownloadVideoError("{fn} error: {e}".format(fn='download_file_from_url', e=repr(e)))
+
+
+def recursive_get_index(query_list, query_value):
+    """
+    Recursive get the index of value in list
+    :param query_list:
+    :param query_value:
+    :return: index
+    """
+    try:
+        return query_list.index(query_value)
+    except ValueError:
+        query_list.append(query_value)
+        return recursive_get_index(query_list, query_value)
 
 
 def write_result_to_xls(source_xls, download_result):
@@ -417,27 +443,33 @@ def write_result_to_xls(source_xls, download_result):
     """
     try:
         column_name_list = source_xls.get_column_name_list()
+        columns_number = len(column_name_list)
+
+        y_result = recursive_get_index(column_name_list, 'result') + 1
+        if y_result > columns_number:
+            source_xls.write_sheet_rows_value(sheet_name=source_xls.sheet.title, values=(1, y_result, 'result'))
+
+        y_size = recursive_get_index(column_name_list, 'size(MB)') + 1
+        if y_size > columns_number:
+            source_xls.write_sheet_rows_value(sheet_name=source_xls.sheet.title, values=(1, y_size, 'size(MB)'))
+
+        y_type = recursive_get_index(column_name_list, 'type') + 1
+        if y_type > columns_number:
+            source_xls.write_sheet_rows_value(sheet_name=source_xls.sheet.title, values=(1, y_type, 'type'))
+
         for row_object in download_result:
             x = row_object.position
-            y = column_name_list.index('result') + 1
-            column_number = len(column_name_list)
+            y = y_result
             values = (x, y, row_object.column_value.get('result', 'unknown'))
             source_xls.write_sheet_rows_value(sheet_name=row_object.sheet_name, values=values)
 
             if row_object.column_value.get('size(MB)'):
-                if 'size(MB)' in column_name_list:
-                    y = column_name_list.index('size(MB)') + 1
-                else:
-                    y = column_number + 1
-                    column_number += 1
+                y = y_size
                 values = (x, y, row_object.column_value.get('size(MB)'))
                 source_xls.write_sheet_rows_value(sheet_name=row_object.sheet_name, values=values)
 
             if row_object.column_value.get('type'):
-                if 'type' in column_name_list:
-                    y = column_name_list.index('type') + 1
-                else:
-                    y = column_number + 1
+                y = y_type
                 values = (x, y, row_object.column_value.get('type'))
                 source_xls.write_sheet_rows_value(sheet_name=row_object.sheet_name, values=values)
 
@@ -459,7 +491,8 @@ def usage():
 Usage:
     python3.9 handle.py -file [ -sheet -start -end ]
     Help:
-     -h --help   
+     -h --help
+     -c --check   <check whether download file exists and do nothing>   
      
     Mandatory options:
      -f --file    <source excel>
@@ -485,9 +518,9 @@ def main(argv):
     _end_point = None
 
     try:
-        opts, args = getopt.getopt(argv, "hcf:t:s:e:", ["help", "file", "sheet", "start", "end"])  # 短选项模式
+        opts, args = getopt.getopt(argv, "hcf:t:s:e:", ["help", "file", "sheet", "start", "end"])  # 短选项和长选型模式
     except getopt.GetoptError:
-        print("Usage 1: python3.9 handle.py -h  -f <source excel>  -t <excel sheet>  -s <start row index>  "
+        print("Usage 1: python3.9 handle.py -h -c -f <source excel>  -t <excel sheet>  -s <start row index>  "
               "-e <end row index> \nUsage 2: python3.9 handle.py --help --check --file <source excel>  "
               "--sheet <excel sheet> --start <start row index>  --end <end row index>")
         sys.exit(2)  # 2 Incorrect Usage

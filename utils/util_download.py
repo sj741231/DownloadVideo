@@ -27,7 +27,7 @@ from contextlib import closing
 import hashlib
 
 # set socket default timeout
-SOCKET_TIMEOUT = 1800
+SOCKET_TIMEOUT = 3600 * 3
 
 
 class WGetError(Exception):
@@ -216,6 +216,12 @@ def get_requester():
 
 
 def get_download_file_size(download_url, **kwargs):
+    """
+    Get file size of download file from download url
+    :param download_url:  download url
+    :param kwargs:
+    :return: file size
+    """
     # res_length = requests.get(download_url, stream=True)
     with closing(download_file_requester.get_url(url=download_url, stream=True)) as res:
         total_size = int(res.headers['Content-Length'])
@@ -223,6 +229,15 @@ def get_download_file_size(download_url, **kwargs):
 
 
 def download_small_file(download_url, absolute_path_file, file_name, retry, **kwargs):
+    """
+    Download small file
+    :param download_url:  url
+    :param absolute_path_file: the file including absolute path
+    :param file_name: file name
+    :param retry: retry time
+    :param kwargs:
+    :return: download file name or None
+    """
     headers = {
         'Connection': 'keep-alive',
         'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, '
@@ -253,6 +268,16 @@ def download_small_file(download_url, absolute_path_file, file_name, retry, **kw
 
 
 def download_large_file(download_url, absolute_path_file, file_name, chunk_size, retry, **kwargs):
+    """
+    Download large file from download url by breakpoint continuation
+    :param download_url: url
+    :param absolute_path_file: the file including absolute path
+    :param file_name: file name
+    :param chunk_size: chunk size
+    :param retry: retry time
+    :param kwargs:
+    :return: file name or None
+    """
     _temp_size = check_temp_file_exists(absolute_path_file)
 
     headers = {
@@ -300,6 +325,9 @@ def download_file(download_url, absolute_path_file, file_name, chunk_size=4096 *
 
 
 class Download(object):
+    """
+    Class of download file from url
+    """
     parent_path = None
     chunk_size = 4096 * 1024
     retry = 3
@@ -316,6 +344,11 @@ class Download(object):
         self.get_kwargs(**kwargs)
 
     def get_kwargs(self, **kwargs):
+        """
+        Get and check parameter in kwargs
+        :param kwargs:
+        :return:
+        """
         try:
             for k, v in kwargs.items():
                 if hasattr(self, f'get_attribute_{k}'):
@@ -381,6 +414,16 @@ class Download(object):
 
     @staticmethod
     def get_download_file_size(download_url, absolute_path_file, file_name, retry, timeout, **kwargs):
+        """
+        Get file size of download file from download url
+        :param download_url: url
+        :param absolute_path_file: storage file including absolute path
+        :param file_name: file name
+        :param retry: retry times
+        :param timeout: connect and wait timeout
+        :param kwargs:
+        :return:
+        """
         # res_length = requests.get(download_url, stream=True)
         headers = {
             'Connection': 'keep-alive',
@@ -431,7 +474,7 @@ class Download(object):
             print(f'Exception: {repr(e)}')
 
     @staticmethod
-    def get_parent_path(self, absolute_path_file, **kwargs):
+    def get_parent_path(absolute_path_file, **kwargs):
         try:
             _parent_path = os.path.dirname(os.path.abspath(absolute_path_file))
 
@@ -447,8 +490,13 @@ class Download(object):
         _file_name = os.path.basename(absolute_path_file)
         return str(_file_name).strip()
 
-    # def get_download_params(self, storage_file_name, chunk_size, retry, **kwargs):
     def get_download_params(self, storage_file_name, **kwargs):
+        """
+        Prepare parameter for download
+        :param storage_file_name: storage file including absolute path
+        :param kwargs:
+        :return:
+        """
         kwargs['absolute_path_file'] = self.get_absolute_path_file(storage_file_name, **kwargs)
         assert kwargs.get('absolute_path_file'), f"storage_file_name {storage_file_name} invalid"
         # kwargs['chunk_size'] = chunk_size if isinstance(chunk_size,
@@ -461,6 +509,12 @@ class Download(object):
 
     @staticmethod
     def get_download_url(download_url, **kwargs):
+        """
+        Get and check download url
+        :param download_url:
+        :param kwargs:
+        :return:
+        """
         _download_url = str(download_url).strip() if download_url and str(download_url).strip() else ''
         if _download_url.startswith('http') is False:
             _download_url = f"http://{_download_url}"
@@ -470,9 +524,13 @@ class Download(object):
         return kwargs
 
     def get_total_size(self, **kwargs):
+        """
+        Get file size
+        :param kwargs:
+        :return:
+        """
         try:
             kwargs['total_size'] = self.get_download_file_size(**kwargs)
-            print(f"***** kwargs: {kwargs}")
             return kwargs
         except:
             raise
@@ -493,6 +551,16 @@ class Download(object):
             raise PreDownloadError(error_msg)
 
     def download_small_file(self, download_url, absolute_path_file, file_name, retry, timeout, **kwargs):
+        """
+        Download small file
+        :param download_url:  url
+        :param absolute_path_file: the file including absolute path
+        :param file_name: file name
+        :param retry: retry time
+        :param timeout: connect and wait timeout
+        :param kwargs:
+        :return: download file name or raise Exception
+        """
         headers = {
             'Connection': 'keep-alive',
             'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, '
@@ -525,6 +593,18 @@ class Download(object):
 
     def download_large_file(self, download_url, absolute_path_file, file_name, chunk_size, retry, timeout, temp_size,
                             **kwargs):
+        """
+        Download large file from download url by breakpoint continuation
+        :param download_url:  url
+        :param absolute_path_file: the file including absolute path
+        :param file_name: file name
+        :param chunk_size: file chunk size
+        :param retry: retry time
+        :param timeout: connect and wait timeout
+        :param temp_size: temp file size
+        :param kwargs:
+        :return: download file name or raise Exception
+        """
         headers = {
             'Range': 'bytes=%d-' % temp_size,
             'Connection': 'keep-alive',
@@ -571,6 +651,11 @@ class Download(object):
                     f"Download failed:{file_name}, storage path is {absolute_path_file}, unknown error")
 
     def handle_download(self, **kwargs):
+        """
+        Handle download task
+        :param kwargs:
+        :return:
+        """
         try:
             if kwargs.get('total_size', 0) < kwargs.get('chunk_size', self.chunk_size):
                 kwargs['temp_file'] = self.download_small_file(**kwargs)
@@ -608,12 +693,24 @@ class Download(object):
             return '%s (%d)' % (name, idx)
 
     def rename_temp_file(self, absolute_path_file, temp_file, **kwargs):
+        """
+        Rename temp file to storage file name
+        :param absolute_path_file:
+        :param temp_file:
+        :param kwargs:
+        :return:
+        """
         if os.path.exists(absolute_path_file):
             absolute_path_file = self.filename_fix_existing(absolute_path_file, **kwargs)
         shutil.move(temp_file, absolute_path_file)
         return absolute_path_file
 
     def post_download(self, **kwargs):
+        """
+        Execute after download successful,
+        :param kwargs:
+        :return:
+        """
         try:
             file_name = self.rename_temp_file(**kwargs)
             return file_name
@@ -623,6 +720,16 @@ class Download(object):
             raise PostDownloadError(error_msg)
 
     def get_params_dict(self, download_url, storage_file_name, chunk_size, retry, timeout, **kwargs):
+        """
+        Prepare parameter for download
+        :param download_url:
+        :param storage_file_name:
+        :param chunk_size:
+        :param retry:
+        :param timeout:
+        :param kwargs:
+        :return:
+        """
         params = kwargs
         params['download_url'] = str(kwargs.get('url')).strip() if download_url is None and kwargs.get(
             'url') else download_url
@@ -636,6 +743,16 @@ class Download(object):
 
     def download(self, download_url=None, storage_file_name=None, chunk_size=4096 * 1024, retry=3, timeout=(10, 60),
                  **kwargs):
+        """
+        The main method of Download task
+        :param download_url:
+        :param storage_file_name:
+        :param chunk_size:
+        :param retry:
+        :param timeout:
+        :param kwargs:
+        :return:
+        """
         try:
             params = self.get_params_dict(download_url, storage_file_name, chunk_size, retry, timeout, **kwargs)
             _params = self.pre_download(**params)
@@ -675,7 +792,7 @@ if __name__ == "__main__":
     import os
 
     print(os.path)
-    kwargs = {
+    input_params = {
         'download_url': 'http://dl.videocc.net/5c0ad4c56c/source_5c0ad4c56c5554d675e13b1244c483d2_5?downloadId=5c0ad4c56c&times=1615300644701&ran=647dfc4985c4cc41928adc98380b98d8&sign=f3762ce9324c67ce1964325193c7d066',
         'storage_file_name': '5c0ad4c56c5554d675e13b1244c483d2_5',
         'chunk_size': 4096 * 1024,
@@ -685,7 +802,7 @@ if __name__ == "__main__":
 
     dl = Download()
     print("***" * 30)
-    file = dl.download(**kwargs)
+    file = dl.download(**input_params)
     print(f"file: {file}")
     print("***" * 30)
 
