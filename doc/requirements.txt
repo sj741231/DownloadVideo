@@ -2,6 +2,7 @@ beautifulsoup4==4.9.3
 certifi==2020.12.5
 chardet==4.0.0
 et-xmlfile==1.0.1
+filetype==1.0.7
 idna==2.10
 jdcal==1.4.1
 openpyxl==3.0.6

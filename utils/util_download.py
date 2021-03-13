@@ -27,7 +27,7 @@ from contextlib import closing
 import hashlib
 
 # set socket default timeout
-SOCKET_TIMEOUT = 3600 * 3
+SOCKET_TIMEOUT = 3600 * 12
 
 
 class WGetError(Exception):
@@ -43,6 +43,10 @@ class PreDownloadError(Exception):
 
 
 class PostDownloadError(Exception):
+    pass
+
+
+class InvalidFileError(Exception):
     pass
 
 
@@ -575,7 +579,16 @@ class Download(object):
                                                                        timeout=timeout)) as res:
                     with open(self.get_temp_file_name(absolute_path_file), mode='wb') as temp_file:
                         temp_file.write(res.content)
+
+                if self.get_file_size(temp_file.name) != kwargs.get('total_size'):
+                    raise InvalidFileError
+
                 return temp_file.name
+            except InvalidFileError:
+                error_msg = f"Download failed:{file_name}, storage path is {temp_file.name}," \
+                            f" InvalidFileError: incomplete or corrupt downloaded file."
+                os.remove(temp_file.name)
+                continue
             except RequestException as e:
                 error_msg = f"Download failed::{file_name}, storage path is {absolute_path_file}," \
                             f"RequestException error: {repr(e)}"
@@ -624,22 +637,26 @@ class Download(object):
                                 temp_file.write(chunk)
                                 # temp_file.flush()
 
-                # print(self.get_file_size(temp_file.name))
-                # print(kwargs.get('total_size'))
                 if self.get_file_size(temp_file.name) != kwargs.get('total_size'):
-                    os.remove(temp_file.name)
-                    error_msg = f"Download failed:{file_name}, storage path is " \
-                                f"{self.get_temp_file_name(absolute_path_file)}," \
-                                f"error: incomplete or corrupt downloaded file"
-                    raise DownloadError(error_msg)
+                    raise InvalidFileError
+
                 return temp_file.name
+            except InvalidFileError:
+                error_msg = f"Download failed:{file_name}, storage path is {temp_file.name}," \
+                            f" InvalidFileError: incomplete or corrupt downloaded file."
+                os.remove(temp_file.name)
+
+                headers = {
+                    'Connection': 'keep-alive',
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, '
+                                  'like Gecko) Chrome/58.0.3029.110 Safari/537.36 SE 2.X MetaSr 1.0'
+                }
+                continue
             except RequestException as e:
                 error_msg = f"Download failed:{file_name}, storage path is {absolute_path_file}," \
                             f"RequestException error: {repr(e)}"
                 continue
-            except DownloadError:
-                raise
-            except Exception as e:
+            except Exception:
                 error_msg = f"Download failed:{file_name}, storage path is {absolute_path_file}, " \
                             f"undefined error:{traceback.format_exc()}"
                 raise DownloadError(error_msg)

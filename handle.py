@@ -115,6 +115,7 @@ def download_video_thread(row_object_iterator, **kwargs):
         download_result = []
         all_task = [executor.submit(download_video_task, row_object) for row_object in row_object_iterator]
 
+        # Raise TimeoutError: If the entire result iterator could not be generated before the given timeout.
         for future in as_completed(all_task, timeout=TASK_WAITING_TIME):
             data = future.result()
             if data:
@@ -123,7 +124,7 @@ def download_video_thread(row_object_iterator, **kwargs):
         return download_result
     except TimeoutError as e:
         nlogger.error("{fn} TimeoutError: {e}".format(fn='download_video_thread', e=repr(e)))
-        executor.shutdown(True)  # 不等待future 返回直接关闭资源
+        executor.shutdown(wait=True)  # 等待future 任务都执行完成后再关闭资源
         raise ThreadTaskError('{fn} TimeoutError: {e}'.format(fn='download_video_thread', e=repr(e)))
     except Exception as e:
         nlogger.error("{fn} error: {e}".format(fn='download_video_thread', e=traceback.format_exc()))
@@ -398,11 +399,11 @@ def download_file_from_url(mid_row_object, **kwargs):
             kwargs['download_url'] = url
             kwargs['storage_file_name'] = storage_absolute_path
             kwargs['chunk_size'] = 4096 * 1024
-            kwargs['retry'] = 3
-            kwargs['timeout'] = (10, 120)
+            kwargs['retry'] = 5
+            kwargs['timeout'] = (15, 180)
 
+            _start_time = time.time()
             try:
-                _start_time = time.time()
                 dl_file_name = dl.download(**kwargs)
                 _end_time = time.time()
                 t = _end_time - _start_time
@@ -415,8 +416,8 @@ def download_file_from_url(mid_row_object, **kwargs):
                 t = _end_time - _start_time
                 nlogger.error(f'Download failed: Position {position}, {file_name}, '
                               f'its storage path is {storage_absolute_path}, error: {repr(e)}, it takes {t:.2f}s.')
-                flogger.error(f'Download failed: Position {position}, {file_name}, '
-                              f'its storage path is {storage_absolute_path}.')
+                flogger.error(f'Download failed: Position {position}, {file_name}, its storage path is '
+                              f'{storage_absolute_path}, error: {repr(e)}, it takes {t:.2f}s.')
                 dl_file_name = None
 
             mid_row_object = set_row_object_status(mid_row_object, file_name, dl_file_name=dl_file_name)

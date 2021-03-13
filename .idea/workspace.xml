@@ -1,14 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="16a908bb-3a98-4355-86ed-94be471bd7c1" name="Default Changelist" comment="1、，待测试">
+    <list default="true" id="16a908bb-3a98-4355-86ed-94be471bd7c1" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/doc/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/doc/requirements.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/handle.py" beforeDir="false" afterPath="$PROJECT_DIR$/handle.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/readme.md" beforeDir="false" afterPath="$PROJECT_DIR$/readme.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/settings.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/utils/util_download.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/util_download.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/util_readfile.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/util_readfile.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/util_xlsx.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/util_xlsx.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -77,7 +75,8 @@
       <workItem from="1615268965165" duration="11368000" />
       <workItem from="1615343093039" duration="17152000" />
       <workItem from="1615513679245" duration="12262000" />
-      <workItem from="1615537538660" duration="5733000" />
+      <workItem from="1615537538660" duration="6005000" />
+      <workItem from="1615602613631" duration="5493000" />
     </task>
     <task id="LOCAL-00001" summary="1、完成基础功能">
       <created>1613807131423</created>
@@ -149,7 +148,14 @@
       <option name="project" value="LOCAL" />
       <updated>1615375737995</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="1、测试通过版本，支持断点续传、支持检查文件是否已经存在。">
+      <created>1615544896806</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1615544896806</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -178,51 +184,52 @@
     <MESSAGE value="1、调整配置参数&#10;2、增加download_file方法，准备测试替换wget模块" />
     <MESSAGE value="1、class Download" />
     <MESSAGE value="1、修改为使用requests 模块下载，待测试" />
-    <option name="LAST_COMMIT_MESSAGE" value="1、修改为使用requests 模块下载，待测试" />
+    <MESSAGE value="1、测试通过版本，支持断点续传、支持检查文件是否已经存在。" />
+    <option name="LAST_COMMIT_MESSAGE" value="1、测试通过版本，支持断点续传、支持检查文件是否已经存在。" />
   </component>
   <component name="WindowStateProjectService">
     <state x="440" y="190" key="#Deployment" timestamp="1613901303900">
       <screen x="0" y="0" width="1680" height="1004" />
     </state>
     <state x="440" y="190" key="#Deployment/0.0.1680.1004@0.0.1680.1004" timestamp="1613901303900" />
-    <state x="721" y="115" key="CommitChangelistDialog2" timestamp="1615521788155">
+    <state x="721" y="115" key="CommitChangelistDialog2" timestamp="1615544896578">
       <screen x="0" y="0" width="1680" height="1004" />
     </state>
-    <state x="721" y="115" key="CommitChangelistDialog2/0.0.1680.1004@0.0.1680.1004" timestamp="1615521788155" />
+    <state x="721" y="115" key="CommitChangelistDialog2/0.0.1680.1004@0.0.1680.1004" timestamp="1615544896578" />
     <state x="168" y="139" key="DiffContextDialog" timestamp="1615521777863">
       <screen x="0" y="0" width="1680" height="1004" />
     </state>
     <state x="168" y="139" key="DiffContextDialog/0.0.1680.1004@0.0.1680.1004" timestamp="1615521777863" />
-    <state x="630" y="236" key="VCS.ChangeListViewerDialog" timestamp="1613901639262">
+    <state x="630" y="236" key="VCS.ChangeListViewerDialog" timestamp="1615544931611">
       <screen x="0" y="0" width="1680" height="1004" />
     </state>
-    <state x="630" y="236" key="VCS.ChangeListViewerDialog/0.0.1680.1004@0.0.1680.1004" timestamp="1613901639262" />
-    <state x="440" y="265" key="Vcs.Push.Dialog.v2" timestamp="1614008775487">
+    <state x="630" y="236" key="VCS.ChangeListViewerDialog/0.0.1680.1004@0.0.1680.1004" timestamp="1615544931611" />
+    <state x="440" y="265" key="Vcs.Push.Dialog.v2" timestamp="1615544968596">
       <screen x="0" y="0" width="1680" height="1004" />
     </state>
-    <state x="440" y="265" key="Vcs.Push.Dialog.v2/0.0.1680.1004@0.0.1680.1004" timestamp="1614008775487" />
+    <state x="440" y="265" key="Vcs.Push.Dialog.v2/0.0.1680.1004@0.0.1680.1004" timestamp="1615544968596" />
     <state x="100" y="100" width="1480" height="850" key="com.intellij.history.integration.ui.views.FileHistoryDialog" timestamp="1615540208661">
       <screen x="0" y="23" width="1680" height="981" />
     </state>
     <state x="100" y="100" width="1480" height="850" key="com.intellij.history.integration.ui.views.FileHistoryDialog/0.0.1680.1004@0.0.1680.1004" timestamp="1613912245358" />
     <state x="100" y="100" width="1480" height="850" key="com.intellij.history.integration.ui.views.FileHistoryDialog/0.23.1680.981@0.23.1680.981" timestamp="1615540208661" />
-    <state x="519" y="342" key="com.intellij.ide.util.TipDialog" timestamp="1615343132977">
+    <state x="519" y="342" key="com.intellij.ide.util.TipDialog" timestamp="1615602615264">
       <screen x="0" y="0" width="1680" height="1004" />
     </state>
-    <state x="519" y="342" key="com.intellij.ide.util.TipDialog/0.0.1680.1004@0.0.1680.1004" timestamp="1615343132977" />
+    <state x="519" y="342" key="com.intellij.ide.util.TipDialog/0.0.1680.1004@0.0.1680.1004" timestamp="1615602615264" />
     <state x="519" y="342" key="com.intellij.ide.util.TipDialog/0.0.1680.1005@0.0.1680.1005" timestamp="1614829843077" />
     <state x="519" y="357" key="com.intellij.ide.util.TipDialog/0.23.1680.981@0.23.1680.981" timestamp="1613885031365" />
-    <state x="506" y="282" width="667" height="486" key="find.popup" timestamp="1615543916772">
+    <state x="506" y="282" width="667" height="486" key="find.popup" timestamp="1615604127676">
       <screen x="0" y="0" width="1680" height="1004" />
     </state>
-    <state x="506" y="282" width="667" height="486" key="find.popup/0.0.1680.1004@0.0.1680.1004" timestamp="1615543916772" />
-    <state x="523" y="323" key="git4idea.merge.GitPullDialog" timestamp="1613885168243">
+    <state x="506" y="282" width="667" height="486" key="find.popup/0.0.1680.1004@0.0.1680.1004" timestamp="1615604127676" />
+    <state x="523" y="323" key="git4idea.merge.GitPullDialog" timestamp="1615603328349">
       <screen x="0" y="0" width="1680" height="1004" />
     </state>
-    <state x="523" y="323" key="git4idea.merge.GitPullDialog/0.0.1680.1004@0.0.1680.1004" timestamp="1613885168243" />
-    <state x="607" y="377" key="git4idea.ui.GitTagDialog" timestamp="1613901654454">
+    <state x="523" y="323" key="git4idea.merge.GitPullDialog/0.0.1680.1004@0.0.1680.1004" timestamp="1615603328349" />
+    <state x="607" y="377" key="git4idea.ui.GitTagDialog" timestamp="1615544951927">
       <screen x="0" y="0" width="1680" height="1004" />
     </state>
-    <state x="607" y="377" key="git4idea.ui.GitTagDialog/0.0.1680.1004@0.0.1680.1004" timestamp="1613901654454" />
+    <state x="607" y="377" key="git4idea.ui.GitTagDialog/0.0.1680.1004@0.0.1680.1004" timestamp="1615544951927" />
   </component>
 </project>
