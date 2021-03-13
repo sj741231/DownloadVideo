@@ -1,0 +1,9 @@
+*.pyc
+/logs/
+/upload/
+migrations/
+*.orig
+download/
+.idea/
+
+
