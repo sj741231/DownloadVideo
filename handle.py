@@ -4,6 +4,7 @@ __author__ = 'shijin'
 import os
 import sys
 import getopt
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError
 from utils.util_logfile import nlogger, flogger, slogger, traceback
 from utils.util_xlsx import HandleXLSX
@@ -401,14 +402,19 @@ def download_file_from_url(mid_row_object, **kwargs):
             kwargs['timeout'] = (10, 120)
 
             try:
+                _start_time = time.time()
                 dl_file_name = dl.download(**kwargs)
+                _end_time = time.time()
+                t = _end_time - _start_time
                 nlogger.info(f'Download success: Position {position}, {file_name}, '
-                             f'its storage path is {storage_absolute_path}.')
+                             f'its storage path is {storage_absolute_path}, it takes {t:.2f}s.')
                 slogger.info(f'Download success: Position {position}, {file_name}, '
                              f'its storage path is {storage_absolute_path}.')
             except Exception as e:
+                _end_time = time.time()
+                t = _end_time - _start_time
                 nlogger.error(f'Download failed: Position {position}, {file_name}, '
-                              f'its storage path is {storage_absolute_path}, error: {repr(e)}.')
+                              f'its storage path is {storage_absolute_path}, error: {repr(e)}, it takes {t:.2f}s.')
                 flogger.error(f'Download failed: Position {position}, {file_name}, '
                               f'its storage path is {storage_absolute_path}.')
                 dl_file_name = None
